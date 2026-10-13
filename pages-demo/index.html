@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>B2B 物流运营控制塔 · 脱敏演示</title>
+  <style>
+    :root{color-scheme:dark;--bg:#091321;--panel:#122238;--panel2:#172b43;--line:#29415b;--text:#e7eff8;--muted:#94a9bf;--teal:#65d0c8;--green:#5ad3a0;--yellow:#f3bb61;--red:#ff7777}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 20% -10%,#1a3450 0,transparent 42%),var(--bg);color:var(--text);font:15px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .shell{max-width:1440px;margin:auto;padding:28px clamp(16px,3vw,42px) 48px}.top{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}.eyebrow{color:var(--teal);font-weight:700;letter-spacing:.1em;font-size:12px}.title{margin:5px 0 0;font-size:clamp(25px,3vw,36px);letter-spacing:.01em}.sub{margin:5px 0 0;color:var(--muted)}.demo-badge{flex:none;padding:8px 13px;border:1px solid #557a75;background:#123536;border-radius:999px;color:#9ce6d6;font-size:13px;font-weight:700}
+    .filters{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;padding:16px;background:rgba(18,34,56,.92);border:1px solid var(--line);border-radius:16px;margin-bottom:16px}.field label{display:block;color:var(--muted);font-size:12px;margin:0 0 6px}.field input,.field select{width:100%;min-height:42px;border:1px solid #344b66;border-radius:9px;background:#0e1c2e;color:var(--text);padding:8px 11px;font:inherit}.reset{align-self:end;height:42px;border:1px solid #49627e;border-radius:9px;background:#1c334d;color:var(--text);padding:0 16px;cursor:pointer}
+    .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}.card,.panel{background:linear-gradient(145deg,rgba(23,43,67,.98),rgba(14,28,46,.98));border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 34px #02081133}.card{padding:18px;min-height:132px;position:relative;overflow:hidden}.card:after{content:"";position:absolute;width:120px;height:120px;border:16px solid #5cd1c70d;border-radius:50%;right:-30px;bottom:-64px}.label{color:var(--muted);font-size:13px}.value{font-size:clamp(26px,3vw,36px);font-weight:760;letter-spacing:-.03em;margin-top:8px}.unit{font-size:14px;color:#a8bbce;margin-left:5px}.hint{font-size:12px;color:var(--muted);margin-top:4px}.green{color:var(--green)}.teal{color:var(--teal)}.yellow{color:var(--yellow)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel{padding:18px;min-width:0}.panel h2{font-size:17px;margin:0 0 4px}.caption{font-size:12px;color:var(--muted);margin:0 0 16px}.warehouse-row{display:grid;grid-template-columns:minmax(110px,1.1fr) 2fr auto;align-items:center;gap:12px;margin:16px 0}.warehouse-name{font-weight:600}.bar{height:10px;border-radius:99px;background:#0a1727;overflow:hidden}.bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#64d1c7,#4da0cf)}.percent{font-variant-numeric:tabular-nums;color:#d5e1ed;font-size:13px}.carrier-list{display:grid;gap:11px}.carrier{display:flex;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid #273e58;border-radius:10px;background:#102037}.tag{font-size:12px;color:#9edfd7;background:#15373a;padding:3px 8px;border-radius:999px}.table-panel{margin-top:16px}.table-scroll{overflow:auto;border:1px solid #293f58;border-radius:10px}table{width:100%;border-collapse:collapse;min-width:620px;font-size:13px}th,td{text-align:left;padding:11px 13px;border-bottom:1px solid #293f58;white-space:nowrap}th{background:#182b43;color:var(--muted);font-weight:600}tbody tr:last-child td{border-bottom:0}.status{color:var(--green)}.footer{margin-top:18px;color:var(--muted);font-size:12px;text-align:center}
+    @media(max-width:850px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr}.reset{align-self:stretch}}@media(max-width:520px){.top{display:block}.demo-badge{display:inline-block;margin-top:12px}.filters{grid-template-columns:1fr}.warehouse-row{grid-template-columns:1fr auto}.bar{grid-column:1/-1;grid-row:2}.percent{grid-column:2;grid-row:1}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <div><div class="eyebrow">SOO OPERATIONS · CONTROL TOWER</div><h1 class="title">B2B 物流运营控制塔</h1><p class="sub">订单履约与提货进度 · 静态交互演示</p></div>
+      <span class="demo-badge">脱敏演示 · 虚构样例数据</span>
+    </header>
+    <section class="filters" aria-label="演示筛选">
+      <div class="field"><label for="date">提货日期</label><select id="date"><option value="all">全部演示日期</option><option>2026-01-15</option><option>2026-01-14</option></select></div>
+      <div class="field"><label for="warehouse">仓库</label><select id="warehouse"><option value="all">全部演示仓库</option><option>示例华东仓</option><option>示例华北仓</option><option>示例华南仓</option></select></div>
+      <div class="field"><label for="search">SOO 模糊查询</label><input id="search" type="search" placeholder="输入 DEMO-SOO-…"></div>
+      <button class="reset" id="reset" type="button">重置筛选</button>
+    </section>
+    <section class="kpis" aria-label="演示指标">
+      <article class="card"><div class="label">当日计划提货方数</div><div class="value">248.60<span class="unit">m³</span></div><div class="hint">合成样例 · 非生产数据</div></article>
+      <article class="card"><div class="label">对应生产计划已装载方数</div><div class="value green">221.35<span class="unit">m³</span></div><div class="hint">示例装载完成率 89.0%</div></article>
+      <article class="card"><div class="label">当前状态已提方数</div><div class="value teal">180.20<span class="unit">m³</span></div><div class="hint">示例提货达成率 72.5%</div></article>
+      <article class="card"><div class="label">当前待提 / 超时</div><div class="value yellow">68.40<span class="unit">m³</span></div><div class="hint">此演示不连接任何实时接口</div></article>
+    </section>
+    <section class="grid">
+      <article class="panel"><h2>仓库生产进度</h2><p class="caption">按演示仓库展示装载进度</p><div id="warehouse-list"></div></article>
+      <article class="panel"><h2>承运商达成</h2><p class="caption">示例承运商提货方数与计划方数</p><div class="carrier-list"><div class="carrier"><span>演示承运商甲</span><span><b>86.40</b> / 102.00 m³ <span class="tag">84.7%</span></span></div><div class="carrier"><span>演示承运商乙</span><span><b>57.80</b> / 81.50 m³ <span class="tag">70.9%</span></span></div><div class="carrier"><span>演示承运商丙</span><span><b>36.00</b> / 65.10 m³ <span class="tag">55.3%</span></span></div></div></article>
+    </section>
+    <section class="panel table-panel"><h2>订单进度明细（虚构样例）</h2><p class="caption">输入 SOO 关键字或选择仓库查看筛选效果；编号、仓库、承运商和指标均为虚构。</p><div class="table-scroll"><table><thead><tr><th>SOO 示例编号</th><th>提货日期</th><th>仓库</th><th>承运商</th><th>物流状态</th><th>示例方数</th><th>进度</th></tr></thead><tbody id="orders"></tbody></table></div></section>
+    <p class="footer">本页面为静态脱敏演示，不连接 TMS、本机数据库、后端 API 或真实订单数据。页面筛选只在浏览器本地运行。</p>
+  </main>
+  <script>
+    const orders=[
+      {soo:'DEMO-SOO-001',date:'2026-01-15',warehouse:'示例华东仓',carrier:'演示承运商甲',status:'已提货',cbm:12.4,progress:'已完成'},
+      {soo:'DEMO-SOO-002',date:'2026-01-15',warehouse:'示例华北仓',carrier:'演示承运商乙',status:'已装载',cbm:8.75,progress:'待提货'},
+      {soo:'DEMO-SOO-003',date:'2026-01-15',warehouse:'示例华南仓',carrier:'演示承运商丙',status:'运输中',cbm:6.2,progress:'运输中'},
+      {soo:'DEMO-SOO-004',date:'2026-01-14',warehouse:'示例华东仓',carrier:'演示承运商甲',status:'已提货',cbm:15.8,progress:'已完成'},
+      {soo:'DEMO-SOO-005',date:'2026-01-14',warehouse:'示例华北仓',carrier:'演示承运商乙',status:'待提货',cbm:9.1,progress:'待提货'},
+      {soo:'DEMO-SOO-006',date:'2026-01-14',warehouse:'示例华南仓',carrier:'演示承运商丙',status:'已装载',cbm:11.35,progress:'待提货'}
+    ];
+    const warehouses=[{name:'示例华东仓',rate:91.2},{name:'示例华北仓',rate:84.6},{name:'示例华南仓',rate:72.8}];
+    const $=id=>document.getElementById(id);
+    function render(){const selected=$('warehouse').value,query=$('search').value.trim().toLowerCase(),date=$('date').value;const rows=orders.filter(o=>(selected==='all'||o.warehouse===selected)&&(!query||o.soo.toLowerCase().includes(query))&&(date==='all'||o.date===date));$('orders').innerHTML=rows.map(o=>`<tr><td>${o.soo}</td><td>${o.date}</td><td>${o.warehouse}</td><td>${o.carrier}</td><td class="status">${o.status}</td><td>${o.cbm.toFixed(2)} m³</td><td>${o.progress}</td></tr>`).join('')||'<tr><td colspan="7">没有匹配的演示记录</td></tr>';const shown=warehouses.filter(w=>selected==='all'||w.name===selected);$('warehouse-list').innerHTML=shown.map(w=>`<div class="warehouse-row"><span class="warehouse-name">${w.name}</span><div class="bar"><span style="width:${w.rate}%"></span></div><span class="percent">${w.rate.toFixed(1)}%</span></div>`).join('')||'<p class="caption">请选择仓库</p>';}
+    ['date','warehouse'].forEach(id=>$(id).addEventListener('change',render));$('search').addEventListener('input',render);$('reset').addEventListener('click',()=>{$('date').value='all';$('warehouse').value='all';$('search').value='';render();});render();
+  </script>
+</body>
+</html>
