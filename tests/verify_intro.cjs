@@ -1,0 +1,54 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { chromium } = require('/Users/harumi/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+
+(async () => {
+  const output = path.resolve(__dirname, '../outputs/intro');
+  fs.mkdirSync(output, { recursive: true });
+  const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
+  try {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+    const page = await context.newPage(), errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    const active = () => page.evaluate(() => document.documentElement.classList.contains('intro-active'));
+    const ended = () => page.waitForFunction(() => !document.documentElement.classList.contains('intro-active'));
+    const open = () => page.goto('http://127.0.0.1:4174/', { waitUntil: 'domcontentloaded' });
+    await open();
+    assert(await active(), 'welcome visible on page open');
+    assert(await page.locator('.app-shell').evaluate(el => el.inert), 'dashboard inert during intro');
+    await page.waitForFunction(() => state.data && state.dates.length);
+    const backgroundData = await page.evaluate(() => state.data.source.published_batch_id);
+    await page.waitForTimeout(2400);
+    await page.screenshot({ path: path.join(output, 'welcome-desktop.png') });
+    await ended();
+    assert.equal(await page.locator('.app-shell').evaluate(el => el.inert), false);
+    await page.locator('[data-page="chain"]').click();
+    await page.evaluate(() => reloadData());
+    assert.equal(await active(), false, 'navigation/data updates must not replay');
+    const downloadEvent = page.waitForEvent('download');
+    await page.locator('#broadcast-btn').click();
+    const download = await downloadEvent;
+    assert(download.suggestedFilename().endsWith('.html'), 'BI download remains usable');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    assert(await active(), 'refresh must replay');
+    await page.keyboard.press('Escape'); await ended();
+    assert.equal(await page.locator('#page-title').evaluate(el => el === document.activeElement), true);
+    await open(); await page.locator('#intro-skip').click(); await ended();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(); await page.waitForTimeout(2400);
+    await page.screenshot({ path: path.join(output, 'welcome-mobile.png') });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'intro mobile overflow');
+    await page.keyboard.press('Enter'); await ended();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await open();
+    assert.equal(await page.locator('.intro-title').evaluate(el => getComputedStyle(el).animationName), 'none');
+    await ended();
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+    assert(await active(), 'back-forward restoration must replay');
+    await page.locator('#intro-skip').click(); await ended();
+    assert.deepEqual(errors, []);
+    console.log(JSON.stringify({ passed: true, liveBatch: backgroundData, checks: ['auto completion', 'background data', 'dashboard navigation', 'data refresh', 'BI download', 'reload replay', 'Escape', 'skip button', 'Enter', 'mobile layout', 'reduced motion', 'restored page replay', 'no JS errors'], screenshots: output }, null, 2));
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });
