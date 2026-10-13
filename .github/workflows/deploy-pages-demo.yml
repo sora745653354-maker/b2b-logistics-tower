@@ -1,4 +1,5 @@
 name: Deploy sanitized dashboard demo to GitHub Pages
+# Publish the isolated synthetic demo only.
 
 on:
   push:
