@@ -3,9 +3,6 @@ name: Deploy sanitized dashboard demo to GitHub Pages
 on:
   push:
     branches: [main]
-    paths:
-      - "pages-demo/**"
-      - ".github/workflows/deploy-pages-demo.yml"
   workflow_dispatch:
 
 permissions:
