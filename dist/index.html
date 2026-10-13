@@ -1,0 +1,1599 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1424" />
+  <meta name="description" content="B2B 物流运营控制塔 MVP" />
+  <script>if (['127.0.0.1', 'localhost'].includes(location.hostname) && location.port === '4173') location.replace('http://127.0.0.1:4174/');</script>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1424'/%3E%3Cpath d='M14 42h36M18 34h28M24 26h16' stroke='%23f3a64b' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <title>B2B 物流运营控制塔</title>
+  <script>
+    document.documentElement.classList.add('intro-active');
+    // Keep the dashboard usable even if a later script fails to initialize.
+    window.introFallback = setTimeout(() => {
+      document.documentElement.classList.remove('intro-active');
+      const shell = document.querySelector('.app-shell');
+      if (shell) shell.inert = false;
+    }, 7000);
+  </script>
+  <style>
+    :root {
+      --ink: #0b1424;
+      --ink-2: #101d31;
+      --panel: #14243a;
+      --panel-2: #1a2e47;
+      --line: rgba(203, 222, 242, 0.14);
+      --muted: #90a5bd;
+      --text: #f4f8fc;
+      --accent: #f3a64b;
+      --accent-2: #6bd4ce;
+      --green: #63d6a0;
+      --yellow: #f4ca63;
+      --red: #f27672;
+      --shadow: 0 20px 48px rgba(0, 0, 0, 0.18);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--ink); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 16px; line-height: 1.45; }
+    button, select, input { font: inherit; }
+    button { cursor: pointer; }
+    html.intro-active, html.intro-active body { overflow: hidden; }
+    html.intro-active .app-shell { visibility: hidden; }
+    .welcome-intro { display: none; position: fixed; inset: 0; z-index: 1000; isolation: isolate; overflow: hidden; background: #07111e; }
+    html.intro-active .welcome-intro { display: grid; place-items: center; }
+    .welcome-intro::before { content: ''; position: absolute; inset: 0; z-index: -1; background: radial-gradient(ellipse at 50% 43%, rgba(54,135,154,.22), transparent 55%), radial-gradient(ellipse at 85% 90%, rgba(243,166,75,.08), transparent 45%); }
+    .intro-grid { position: absolute; inset: 0; z-index: -1; opacity: .19; background-image: linear-gradient(rgba(107,212,206,.17) 1px, transparent 1px), linear-gradient(90deg,rgba(107,212,206,.17) 1px,transparent 1px); background-size: 80px 80px; mask-image: radial-gradient(ellipse at center, #000, transparent 72%); animation: intro-grid-in 2s ease both; }
+    .intro-routes { position: absolute; width: max(100%, 1000px); height: 100%; inset: 0 auto 0 50%; transform: translateX(-50%); z-index: -1; }
+    .intro-route { fill: none; stroke: #6bd4ce; stroke-width: 1; opacity: .28; stroke-dasharray: 1; stroke-dashoffset: 1; animation: intro-route-in 1.7s cubic-bezier(.2,.65,.3,1) both; }
+    .intro-route.warm { stroke: #f3a64b; animation-delay: .2s; }
+    .intro-route.late { animation-delay: .4s; }
+    .intro-node { fill: #6bd4ce; opacity: 0; animation: intro-node-in .8s .7s ease both; }
+    .intro-node.warm { fill: #f3a64b; animation-delay: 1s; }
+    .intro-orbit { position: absolute; width: min(74vw, 740px); aspect-ratio: 1; border: 1px solid rgba(107,212,206,.08); border-radius: 50%; z-index: -1; animation: intro-orbit-in 2.2s ease-out both; }
+    .intro-orbit::before { content: ''; position: absolute; inset: 34px; border: 1px dashed rgba(107,212,206,.1); border-radius: 50%; }
+    .intro-corner { position: absolute; top: 30px; left: 36px; color: #87a5b5; font-size: 10px; letter-spacing: .2em; display: flex; align-items: center; gap: 12px; animation: intro-reveal .8s .15s both; }
+    .intro-corner::before { content: ''; width: 18px; height: 2px; background: var(--accent-2); }
+    .intro-content { width: min(100% - 40px, 900px); text-align: center; padding-bottom: 24px; }
+    .intro-emblem { width: 68px; height: 68px; margin: 0 auto 30px; color: var(--accent-2); animation: intro-emblem-in 1.1s .1s cubic-bezier(.16,1,.3,1) both; }
+    .intro-emblem svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+    .intro-kicker { color: #9bb6c8; font-size: 11px; letter-spacing: .32em; margin: 0 0 17px; animation: intro-reveal .9s .5s both; }
+    .intro-title { position: relative; width: fit-content; max-width: 100%; margin: 0 auto; font-size: clamp(38px, 6.2vw, 82px); font-weight: 700; line-height: 1.3; letter-spacing: .035em; animation: intro-title-in 1.2s .7s cubic-bezier(.16,1,.3,1) both; }
+    .intro-title span { color: var(--accent-2); font-weight: 450; letter-spacing: -.04em; margin-right: .22em; }
+    .intro-title::after { content: ''; position: absolute; top: -15%; bottom: -15%; left: -25%; width: 12%; background: linear-gradient(90deg,transparent,rgba(218,255,252,.24),transparent); transform: skewX(-18deg); filter: blur(7px); opacity: 0; animation: intro-light-sweep 1.15s 1.3s both; pointer-events: none; }
+    .intro-rule { height: 1px; width: min(380px, 70%); margin: 29px auto 23px; background: linear-gradient(90deg, transparent, #6bd4ce, #f3a64b, transparent); transform-origin: center; animation: intro-rule-in 1s 1.1s both; }
+    .intro-welcome { margin: 0; color: #e3edf5; font-size: clamp(20px,2.5vw,28px); letter-spacing: .5em; text-indent: .5em; font-weight: 400; animation: intro-reveal 1s 1.55s both; }
+    .intro-caption { margin: 17px 0 0; color: #8aa5b9; font-size: 12px; letter-spacing: .18em; animation: intro-reveal .8s 1.85s both; }
+    .intro-footer { position: absolute; left: 36px; right: 36px; bottom: 30px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .intro-progress { width: 180px; color: #8aa5b9; font-size: 10px; letter-spacing: .15em; }
+    .intro-progress-track { height: 2px; background: rgba(107,212,206,.13); margin-top: 12px; overflow: hidden; }
+    .intro-progress-track::after { content: ''; display: block; height: 100%; background: linear-gradient(90deg,#6bd4ce,#f3a64b); transform-origin: left; animation: intro-progress 3.7s linear both; }
+    .intro-skip { color: #b8ccd9; font-size: 12px; border: 1px solid rgba(184,204,217,.22); border-radius: 999px; background: rgba(18,34,51,.65); padding: 9px 16px; transition: background .15s, border-color .15s; }
+    .intro-skip:hover { background: #1a2e47; border-color: #6bd4ce; }
+    .intro-skip:focus-visible { outline: 2px solid #6bd4ce; outline-offset: 4px; }
+    .intro-skip small { color: #7891a5; margin-left: 10px; font-size: 10px; }
+    .welcome-intro.is-leaving { pointer-events: none; animation: intro-out .45s ease-in both; }
+    html.intro-entering .app-shell { visibility: visible; }
+    @keyframes intro-grid-in { from { opacity: 0; transform: scale(1.05); } to { opacity: .19; transform: scale(1); } }
+    @keyframes intro-route-in { to { stroke-dashoffset: 0; } }
+    @keyframes intro-node-in { to { opacity: .6; } }
+    @keyframes intro-orbit-in { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
+    @keyframes intro-emblem-in { from { opacity: 0; transform: translateY(16px) scale(.85); } to { opacity: 1; transform: none; } }
+    @keyframes intro-reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    @keyframes intro-title-in { from { opacity: 0; clip-path: inset(0 0 100%); transform: translateY(24px); filter: blur(10px); } to { opacity: 1; clip-path: inset(-20% -30%); transform: none; filter: blur(0); } }
+    @keyframes intro-rule-in { from { opacity: 0; transform: scaleX(0); } to { opacity: .7; transform: scaleX(1); } }
+    @keyframes intro-light-sweep { 0% { left: -25%; opacity: 0; } 25% { opacity: 1; } 80% { opacity: .8; } 100% { left: 115%; opacity: 0; } }
+    @keyframes intro-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    @keyframes intro-out { to { opacity: 0; transform: scale(1.025); } }
+    @media (max-width: 600px) { .intro-corner { top: 24px; left: 24px; font-size: 9px; } .intro-footer { left: 24px; right: 24px; bottom: 24px; } .intro-progress { width: 120px; font-size: 9px; } .intro-kicker { font-size: 9px; letter-spacing: .18em; } .intro-title { font-size: clamp(32px,8vw,48px); } .intro-emblem { width: 56px; height: 56px; margin-bottom: 26px; } .intro-orbit { width: 115vw; } .intro-caption { font-size: 11px; letter-spacing: .12em; } .intro-skip small { display: none; } }
+    @media (prefers-reduced-motion: reduce) { .welcome-intro *, .welcome-intro *::before, .welcome-intro *::after, .welcome-intro.is-leaving { animation: none !important; } .intro-node { opacity: .6; } .intro-route { stroke-dashoffset: 0; } .intro-title::after { display: none; } .intro-progress-track::after { transform: none; } }
+    .app-shell { min-height: 100vh; display: grid; grid-template-columns: 244px minmax(0, 1fr); }
+    .sidebar { position: sticky; top: 0; align-self: start; height: 100vh; box-sizing: border-box; overflow-y: auto; z-index: 30; padding: 28px 18px; background: #09111f; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 26px; }
+    .brand { padding: 2px 14px; }
+    .brand-mark { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--accent); color: var(--ink); font-weight: 900; margin-bottom: 16px; }
+    .brand h1 { font-size: 18px; margin: 0; letter-spacing: 0.02em; }
+    .brand p { color: var(--muted); margin: 5px 0 0; font-size: 13px; }
+    .nav-group { display: grid; gap: 6px; }
+    .nav-group-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 8px 4px 14px; }
+    .nav-label { color: #5f7590; text-transform: uppercase; font-size: 11px; letter-spacing: 0.14em; padding: 0; }
+    .nav-entry { display: grid; grid-template-columns: minmax(0,1fr) 34px; align-items: center; border-radius: 12px; }
+    .nav-entry.active { background: var(--panel); }
+    .nav-button { width: 100%; color: #a9bad0; background: transparent; border: 0; border-radius: 10px; display: flex; align-items: center; gap: 12px; padding: 11px 14px; text-align: left; transition: .18s ease; }
+    .nav-button:hover, .nav-entry.active .nav-button { color: var(--text); }
+    .nav-expand { width: 30px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: #8fa4bd; cursor: pointer; transition: transform .18s ease, background .18s ease; }
+    .nav-expand:hover { background: rgba(255,255,255,.06); color: var(--text); }
+    .nav-expand[aria-expanded="true"] { transform: rotate(180deg); }
+    .nav-submenu { grid-column: 1 / -1; display: grid; gap: 3px; padding: 2px 8px 9px 44px; }
+    .nav-submenu[hidden] { display: none; }
+    .nav-subitem { width: 100%; padding: 8px 10px; border: 0; border-left: 2px solid rgba(143,164,189,.25); border-radius: 0 8px 8px 0; background: transparent; color: #91a6bf; font-size: 13px; text-align: left; cursor: pointer; }
+    .nav-subitem:hover, .nav-subitem.active { border-left-color: var(--accent); background: rgba(107,212,206,.08); color: var(--text); }
+    .nav-target { scroll-margin-top: 24px; }
+    .back-top-button { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 4px 7px; border: 1px solid rgba(107,212,206,.28); border-radius: 8px; background: rgba(107,212,206,.08); color: #bde8e6; font-size: 11px; white-space: nowrap; cursor: pointer; transition: background .18s ease, border-color .18s ease; }
+    .back-top-button:hover { background: rgba(107,212,206,.16); border-color: var(--accent); }
+    .back-top-button[hidden] { display: none; }
+    .nav-icon { width: 19px; color: var(--accent-2); text-align: center; font-weight: 800; }
+    .sidebar-note { margin-top: 0; padding: 14px; border-radius: 12px; background: rgba(107, 212, 206, 0.08); border: 1px solid rgba(107, 212, 206, 0.18); color: #afd9d7; font-size: 13px; }
+    .main { min-width: 0; background: radial-gradient(circle at 90% 0%, rgba(40, 93, 125, .18), transparent 30%), var(--ink); }
+    .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: center; padding: 28px 38px 20px; border-bottom: 1px solid var(--line); }
+    .eyebrow { font-size: 12px; color: var(--accent); letter-spacing: .15em; text-transform: uppercase; }
+    .topbar h2 { font-size: 25px; line-height: 1.1; margin: 4px 0 0; letter-spacing: -.02em; }
+    .top-actions { display: flex; align-items: center; gap: 12px; }
+    .sync-chip, .pill { padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; color: #c0d2e7; background: rgba(255,255,255,.03); font-size: 13px; white-space: nowrap; }
+    .sync-chip strong { color: var(--green); font-weight: 650; }
+    .button-primary, .button-quiet { border: 0; border-radius: 9px; padding: 10px 13px; color: var(--ink); background: var(--accent); font-weight: 700; }
+    .button-quiet { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+    .content { padding: 26px 38px 42px; max-width: 1800px; }
+    .filter-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; margin-bottom: 9px; }
+    .outbound-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 1180px) { .outbound-kpis { grid-template-columns: 1fr; } }
+    .filter-hint { color: var(--muted); font-size: 12px; margin: 0 0 18px; }
+    .field { display: grid; gap: 6px; min-width: 0; }
+    .field label { color: var(--muted); font-size: 12px; }
+    .field select, .field input, .date-toggle { width: 100%; min-width: 0; height: 42px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; outline: none; }
+    .field-controls { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 7px; }
+    .field-controls input, .field-controls select { font-size: 13px; }
+    .search-wrap { position: relative; min-width: 0; }
+    .filter-actions { display: flex; align-items: center; align-self: start; gap: 8px; margin-top: 23px; }
+    .filter-actions .button-quiet { height: 42px; white-space: nowrap; padding: 9px 12px; }
+    .date-multiselect, .production-date-multiselect, .multi-select { position: relative; }
+    .date-toggle, .multi-toggle { padding: 9px 30px 9px 10px; text-align: left; position: relative; }
+    .multi-toggle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .date-toggle::after, .multi-toggle::after { content: "⌄"; position: absolute; right: 10px; color: #c0d2e7; }
+    .date-options { display: none; position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; min-width: 100%; max-height: 260px; overflow: auto; padding: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; box-shadow: var(--shadow); }
+    .date-options.open { display: grid; gap: 2px; }
+    .date-actions, .multi-actions { display: flex; align-items: center; gap: 4px; padding: 0 0 5px; margin-bottom: 2px; border-bottom: 1px solid var(--line); }
+    .date-actions button, .multi-actions button { padding: 6px 8px; color: var(--accent-2); border: 0; border-radius: 6px; background: transparent; font-size: 12px; cursor: pointer; }
+    .date-actions button:hover, .date-actions button[aria-pressed="true"], .multi-actions button:hover { background: rgba(107, 212, 206, .1); }
+    .date-options label, .multi-items label { display: flex; align-items: center; gap: 9px; padding: 7px 8px; color: var(--text); font-size: 13px; white-space: nowrap; cursor: pointer; }
+    .date-options input, .multi-items input { width: auto; padding: 0; border: 0; background: transparent; accent-color: var(--accent-2); }
+    .multi-options { display: none; position: absolute; z-index: 25; top: calc(100% + 6px); left: 0; width: max(100%, 250px); max-height: 330px; overflow: auto; padding: 7px; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; box-shadow: var(--shadow); }
+    .multi-options.open { display: grid; gap: 3px; }
+    .multi-search { width: 100%; height: 34px; padding: 7px 9px; color: var(--text); background: rgba(5, 14, 26, .72); border: 1px solid var(--line); border-radius: 7px; outline: none; }
+    .multi-items { max-height: 225px; overflow: auto; }
+    .multi-empty { padding: 9px; color: var(--muted); font-size: 12px; }
+    #chain-missing-dialog { width: min(1120px, calc(100vw - 24px)); max-width: none; max-height: 90vh; padding: 0; color: var(--text); background: transparent; border: 0; }
+    #chain-missing-dialog::backdrop { background: rgba(4, 10, 18, .78); backdrop-filter: blur(3px); }
+    #order-status-dialog { width: min(1120px, calc(100vw - 24px)); max-width: none; max-height: 90vh; padding: 0; color: var(--text); background: transparent; border: 0; }
+    #order-status-dialog::backdrop { background: rgba(4, 10, 18, .78); backdrop-filter: blur(3px); }
+    #warehouse-overdue-dialog { width: min(1120px, calc(100vw - 24px)); max-width: none; max-height: 90vh; padding: 0; color: var(--text); background: transparent; border: 0; }
+    #warehouse-overdue-dialog::backdrop { background: rgba(4, 10, 18, .78); backdrop-filter: blur(3px); }
+    #outbound-detail-dialog { width: min(1280px, calc(100vw - 24px)); max-width: none; max-height: 90vh; padding: 0; color: var(--text); background: transparent; border: 0; }
+    #outbound-detail-dialog::backdrop { background: rgba(4, 10, 18, .78); backdrop-filter: blur(3px); }
+    .dialog-card { padding: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+    .dialog-card .table-wrap { max-height: 55vh; overflow: auto; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+    .field input::placeholder { color: #6e829a; }
+    .field select:focus, .field input:focus { border-color: var(--accent-2); }
+    .filter-bar .date-multiselect { min-width: 0; }
+    .source-banner { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 15px; border-radius: 10px; background: rgba(243, 166, 75, .08); border: 1px solid rgba(243, 166, 75, .24); margin-bottom: 22px; color: #ebd0a9; font-size: 13px; }
+    .source-banner strong { color: var(--accent); }
+    .section { margin-top: 27px; }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .section-head h3 { margin: 0; font-size: 17px; }
+    .section-head span { color: var(--muted); font-size: 13px; }
+    .kpis { display: grid; grid-template-columns: repeat(6, minmax(145px, 1fr)); gap: 12px; }
+    .volume-kpi-heading { margin: 18px 0 10px; color: var(--muted); font-size: 13px; font-weight: 650; letter-spacing: .04em; }
+    .volume-kpis .kpi { border-top: 2px solid rgba(107, 212, 206, .48); }
+    .kpi { min-height: 132px; padding: 17px; border: 1px solid var(--line); border-radius: 13px; background: linear-gradient(145deg, rgba(26, 46, 71, .92), rgba(14, 27, 45, .96)); box-shadow: var(--shadow); position: relative; overflow: hidden; }
+    .kpi::after { content: ""; position: absolute; right: -34px; bottom: -38px; width: 110px; height: 110px; border: 20px solid rgba(107, 212, 206, .08); border-radius: 50%; }
+    .kpi-label { font-size: 13px; color: var(--muted); }
+    .kpi-value { font-size: 30px; font-weight: 760; line-height: 1.12; margin-top: 10px; letter-spacing: -.04em; }
+    .kpi-unit { font-size: 12px; color: #9fb1c7; margin-left: 4px; letter-spacing: 0; font-weight: 500; }
+    .kpi-meta { color: #7c93ac; font-size: 12px; margin-top: 10px; }
+    .kpis.chain-kpis { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 12px; }
+    .chain-kpi { grid-column: span 2; min-width: 0; min-height: 154px; padding: 16px; display: flex; flex-direction: column; }
+    .chain-kpi::after { display: none; }
+    .chain-kpi-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .chain-kpi-icon { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; border-radius: 12px; color: #7fe0d8; background: linear-gradient(145deg, rgba(107,212,206,.2), rgba(107,212,206,.07)); border: 1px solid rgba(107,212,206,.2); }
+    .chain-kpi-icon svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .chain-kpi:nth-child(2) .chain-kpi-icon { color: #91baff; background: linear-gradient(145deg,rgba(91,151,255,.2),rgba(91,151,255,.07)); border-color: rgba(91,151,255,.2); }
+    .chain-kpi:nth-child(3) .chain-kpi-icon { color: #f5cf78; background: linear-gradient(145deg,rgba(245,207,120,.2),rgba(245,207,120,.07)); border-color: rgba(245,207,120,.2); }
+    .chain-kpi:nth-child(4) .chain-kpi-icon { color: #c3a2ff; background: linear-gradient(145deg,rgba(163,126,255,.2),rgba(163,126,255,.07)); border-color: rgba(163,126,255,.2); }
+    .chain-kpi:nth-child(5) .chain-kpi-icon { color: #ffb77b; background: linear-gradient(145deg,rgba(243,166,75,.2),rgba(243,166,75,.07)); border-color: rgba(243,166,75,.2); }
+    .chain-kpi .kpi-label { line-height: 1.35; }
+    .chain-kpi .kpi-value { margin-top: 14px; font-size: clamp(22px, 2vw, 30px); font-variant-numeric: tabular-nums; }
+    .chain-kpi .kpi-meta { margin-top: auto; padding-top: 10px; line-height: 1.5; }
+    .kpi.good .kpi-value { color: var(--green); }
+    .kpi.warn .kpi-value { color: var(--yellow); }
+    .kpi.danger .kpi-value { color: var(--red); }
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .overview-workload-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .overview-search-controls { display: grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 12px; max-width: 920px; margin: 14px 0; }
+    .outbound-channel-filter { max-width: 450px; margin: -2px 0 14px; }
+    .panel { background: rgba(20, 36, 58, .84); border: 1px solid var(--line); border-radius: 13px; padding: 18px; min-width: 0; }
+    .panel h4 { margin: 0; font-size: 15px; }
+    .panel-sub { color: var(--muted); font-size: 12px; margin: 5px 0 14px; }
+    .carrier-risk-criteria { display: flex; flex-wrap: wrap; gap: 7px 14px; margin: -2px 0 10px; color: var(--muted); font-size: 12px; }
+    .carrier-risk-criteria span { white-space: nowrap; }
+    .carrier-risk-criteria .risk-red { color: var(--red); }
+    .carrier-risk-criteria .risk-yellow { color: var(--yellow); }
+    .carrier-risk-criteria .risk-green { color: var(--green); }
+    .carrier-risk-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .carrier-risk-actions label { display: inline-flex; align-items: center; gap: 8px; }
+    .carrier-time-note { margin: -2px 0 10px; color: var(--muted); font-size: 12px; }
+    .pickup-status-badge { display: inline-block; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .pickup-status-badge.picked { color: #0b5736; background: #63d6a0; }
+    .pickup-status-badge.pending { color: #fff; background: #ed625f; }
+    .warehouse-timeout-head { align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .warehouse-timeout-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; margin-left: auto; }
+    .warehouse-timeout-controls label { display: grid; gap: 5px; min-width: 160px; color: var(--muted); font-size: 12px; }
+    .warehouse-timeout-controls select { width: 100%; height: 38px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+    .warehouse-timeout-controls button { height: 38px; white-space: nowrap; }
+    .warehouse-timeout-controls button:disabled { opacity: .45; cursor: not-allowed; }
+    .warehouse-timeout-note { margin: -2px 0 10px; color: var(--muted); font-size: 12px; }
+    .orders-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+    .orders-controls .field { width: min(100%, 360px); }
+    .orders-controls .field.status-field { width: min(100%, 220px); }
+    .orders-count { margin: 0 0 12px; color: var(--muted); font-size: 12px; }
+    .chain-filter-controls { display: grid; grid-template-columns: minmax(170px, 1.35fr) repeat(4, minmax(125px, 1fr)) auto; align-items: end; gap: 10px; margin-bottom: 14px; }
+    .chain-filter-controls .field { min-width: 0; }
+    .chain-filter-controls select, .chain-filter-controls input { width: 100%; min-width: 0; height: 38px; padding: 7px 9px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; outline: none; }
+    .chain-filter-controls select:focus, .chain-filter-controls input:focus { border-color: var(--accent-2); }
+    .chain-filter-controls button { height: 38px; white-space: nowrap; }
+    .bar-list { display: grid; gap: 14px; }
+    .hourly-outbound-section { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .hourly-outbound-section h5 { margin: 0; color: var(--text); font-size: 14px; }
+    .hourly-outbound-note { margin: 5px 0 10px; color: var(--muted); font-size: 11px; }
+    .hourly-outbound-scroll { max-height: 360px; overflow: auto; border: 1px solid rgba(145, 171, 202, .16); border-radius: 8px; }
+    .hourly-outbound-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 11px; font-variant-numeric: tabular-nums; }
+    .hourly-outbound-table th, .hourly-outbound-table td { padding: 7px 8px; border-bottom: 1px solid rgba(145, 171, 202, .12); text-align: right; white-space: nowrap; }
+    .hourly-outbound-table thead th { position: sticky; top: 0; z-index: 2; color: var(--muted); background: var(--panel); }
+    .hourly-outbound-table th:first-child, .hourly-outbound-table td:first-child { position: sticky; left: 0; z-index: 1; max-width: 190px; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+    .hourly-outbound-table thead th:first-child { z-index: 3; }
+    .hourly-outbound-table td:first-child { color: #c5d4e5; background: var(--panel); }
+    .hourly-outbound-table td.efficiency-cell { color: var(--text); }
+    .hourly-outbound-table td.daily-total { color: #a9bfd5; }
+    .hourly-outbound-empty { padding: 12px; color: var(--muted); font-size: 12px; }
+    .pickup-efficiency-section { margin-top: 18px; }
+    .pickup-efficiency-section h5 { margin: 0; color: var(--text); font-size: 14px; }
+    .pickup-efficiency-note { margin: 5px 0 10px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .pickup-efficiency-toolbar { display: grid; grid-template-columns: repeat(3, minmax(130px, 1fr)) auto auto; align-items: end; gap: 10px; margin: 12px 0; padding: 12px; border: 1px solid rgba(145,171,202,.14); border-radius: 10px; background: rgba(8,20,34,.28); }
+    .pickup-efficiency-toolbar .field { gap: 5px; }
+    .pickup-efficiency-toolbar label { color: var(--muted); font-size: 11px; }
+    .pickup-efficiency-toolbar .button-quiet { min-height: 36px; white-space: nowrap; }
+    .pickup-filter-select { position: relative; min-width: 0; }
+    .pickup-filter-toggle { width: 100%; min-height: 36px; padding: 8px 30px 8px 10px; overflow: hidden; color: var(--text); text-align: left; text-overflow: ellipsis; white-space: nowrap; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; position: relative; }
+    .pickup-filter-toggle::after { content: "⌄"; position: absolute; right: 10px; color: #c0d2e7; }
+    .pickup-filter-menu { display: none; position: absolute; z-index: 35; top: calc(100% + 6px); left: 0; min-width: 100%; padding: 7px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 9px; box-shadow: var(--shadow); }
+    .pickup-filter-menu.open { display: block; }
+    .pickup-filter-menu { max-height: 300px; overflow: auto; }
+    .pickup-filter-actions { display: flex; gap: 4px; padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+    .pickup-filter-actions button { padding: 6px 8px; color: var(--accent-2); border: 0; border-radius: 6px; background: transparent; font-size: 12px; cursor: pointer; }
+    .pickup-filter-actions button:hover { background: rgba(107,212,206,.1); }
+    .pickup-filter-items { display: grid; gap: 2px; max-height: 235px; overflow: auto; }
+    .pickup-filter-items label { display: flex; align-items: center; gap: 8px; padding: 7px 8px; color: var(--text); font-size: 12px; white-space: nowrap; cursor: pointer; }
+    .pickup-filter-items input { width: auto; margin: 0; accent-color: var(--accent-2); }
+    .pickup-efficiency-summary { display: grid; grid-template-columns: repeat(2, minmax(220px, 360px)); gap: 10px; margin: 12px 0; }
+    .pickup-efficiency-stat { padding: 10px 12px; border: 1px solid rgba(145,171,202,.16); border-radius: 9px; background: rgba(8,20,34,.35); }
+    .pickup-efficiency-stat span { display: block; color: var(--muted); font-size: 11px; }
+    .pickup-efficiency-stat strong { display: block; margin-top: 4px; color: #dff5f3; font-size: 17px; font-variant-numeric: tabular-nums; }
+    .pickup-efficiency-scroll { max-height: 420px; overflow: auto; border: 1px solid rgba(145,171,202,.16); border-radius: 8px; }
+    .pickup-efficiency-table { width: 100%; min-width: 900px; border-collapse: separate; border-spacing: 0; font-size: 11px; font-variant-numeric: tabular-nums; }
+    .pickup-efficiency-table th, .pickup-efficiency-table td { padding: 8px 9px; border-bottom: 1px solid rgba(145,171,202,.12); text-align: right; white-space: nowrap; }
+    .pickup-efficiency-table thead th { position: sticky; top: 0; z-index: 2; color: var(--muted); background: var(--panel); }
+    .pickup-efficiency-table th:nth-child(2), .pickup-efficiency-table td:nth-child(2), .pickup-efficiency-table th:nth-child(3), .pickup-efficiency-table td:nth-child(3) { text-align: left; }
+    .pickup-efficiency-table thead th:last-child { text-align: center; }
+    .pickup-efficiency-table td:nth-child(2) { color: #c5d4e5; }
+    .pickup-efficiency-table td:last-child { color: #9eb4c9; }
+    .pickup-efficiency-empty { padding: 14px; color: var(--muted); font-size: 12px; }
+    #pickup-detail-dialog { width: min(1280px, calc(100vw - 24px)); max-width: none; max-height: 90vh; padding: 0; color: var(--text); background: transparent; border: 0; }
+    #pickup-detail-dialog::backdrop { background: rgba(4, 10, 18, .78); backdrop-filter: blur(3px); }
+    .pickup-detail-table { width: 100%; min-width: 1120px; border-collapse: separate; border-spacing: 0; font-size: 11px; font-variant-numeric: tabular-nums; }
+    .pickup-detail-table th, .pickup-detail-table td { padding: 8px 9px; border-bottom: 1px solid rgba(145,171,202,.12); white-space: nowrap; text-align: left; }
+    .pickup-detail-table thead th { position: sticky; top: 0; z-index: 2; color: var(--muted); background: var(--panel); }
+    .pickup-detail-table td:nth-child(9) { text-align: right; color: #dff5f3; }
+    @media (max-width: 900px) { .pickup-efficiency-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 720px) { .pickup-efficiency-summary { grid-template-columns: 1fr; } .pickup-efficiency-toolbar { grid-template-columns: 1fr; } }
+    .warehouse-production-wrap { overflow: auto; border: 1px solid rgba(145, 171, 202, .16); border-radius: 10px; }
+    .warehouse-production-table { width: 100%; min-width: 840px; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .warehouse-production-table th, .warehouse-production-table td { padding: 10px 11px; border-bottom: 1px solid rgba(145, 171, 202, .12); white-space: normal; vertical-align: middle; }
+    .warehouse-production-table thead th { position: sticky; top: 0; z-index: 2; color: var(--muted); background: #122237; text-align: left; }
+    .warehouse-production-table th:first-child, .warehouse-production-table td:first-child { position: sticky; left: 0; z-index: 1; width: 142px; background: #14243a; }
+    .warehouse-production-table thead th:first-child { z-index: 3; }
+    .warehouse-production-table td:first-child { color: #d9e6f2; font-weight: 650; }
+    .production-stage-heading { display: grid; gap: 3px; }
+    .production-stage-heading strong { color: #d9e6f2; font-size: 12px; }
+    .production-stage-heading span { color: var(--accent-2); font-size: 11px; font-weight: 600; }
+    .production-cell { display: grid; gap: 5px; min-width: 130px; }
+    .production-cell-main { display: flex; justify-content: space-between; gap: 6px; align-items: baseline; }
+    .production-cell-main strong { color: #e6f1fa; font-size: 13px; }
+    .production-cell-main span { color: #afc1d4; font-size: 10px; white-space: nowrap; }
+    .production-track { height: 5px; border-radius: 99px; background: #0b1728; overflow: hidden; }
+    .production-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent-2), #4d9bd2); }
+    .warehouse-production-note { margin: 10px 0 0; color: var(--muted); font-size: 11px; }
+    .bar-row { display: grid; grid-template-columns: minmax(94px, 1fr) minmax(120px, 2.2fr) auto; gap: 10px; align-items: center; }
+    .bar-name { color: #c5d4e5; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { height: 8px; border-radius: 99px; background: #0b1728; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent-2), #4d9bd2); }
+    .bar-fill.warn { background: linear-gradient(90deg, var(--yellow), #e68d4b); }
+    .bar-fill.danger { background: linear-gradient(90deg, var(--red), #b95575); }
+    .bar-value { color: #d9e6f2; font-variant-numeric: tabular-nums; font-size: 13px; text-align: right; }
+    .carrier-volume-bars .bar-row { grid-template-columns: minmax(105px, 1fr) minmax(90px, 1.25fr) minmax(148px, auto); gap: 12px; }
+    .carrier-volume-bars .bar-value { white-space: nowrap; }
+    .alert-list { display: grid; gap: 10px; }
+    .alert-item { padding: 12px 13px; border-radius: 10px; background: rgba(255,255,255,.035); border-left: 3px solid var(--yellow); }
+    .alert-item.red { border-color: var(--red); }
+    .alert-item.green { border-color: var(--green); }
+    .alert-title { display: flex; justify-content: space-between; gap: 8px; font-weight: 650; font-size: 13px; }
+    .alert-item p { margin: 5px 0 0; color: #aabbd0; font-size: 12px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; margin-right: 6px; }
+    .text-green { color: var(--green); }
+    .text-yellow { color: var(--yellow); }
+    .text-red { color: var(--red); }
+    .table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: 11px; }
+    table { border-collapse: collapse; width: 100%; min-width: 920px; }
+    th, td { padding: 12px 13px; text-align: left; border-bottom: 1px solid rgba(203, 222, 242, .1); font-size: 13px; white-space: nowrap; }
+    th { color: #8298b2; font-weight: 600; background: #122237; position: sticky; top: 0; }
+    td { color: #d7e3ef; }
+    tr:last-child td { border-bottom: 0; }
+    .tag { padding: 4px 8px; border-radius: 999px; font-size: 12px; background: rgba(255,255,255,.08); color: #c0d0e2; }
+    .tag.green { color: var(--green); background: rgba(99, 214, 160, .12); }
+    .tag.yellow { color: var(--yellow); background: rgba(244, 202, 99, .12); }
+    .tag.red { color: var(--red); background: rgba(242, 118, 114, .12); }
+    .empty { padding: 36px 20px; text-align: center; color: var(--muted); }
+    .pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 13px; color: var(--muted); font-size: 13px; }
+    .pagination button { border: 1px solid var(--line); color: var(--text); background: var(--panel); border-radius: 7px; padding: 7px 11px; }
+    .pagination button:disabled { opacity: .45; cursor: not-allowed; }
+    .quality-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .quality-card { padding: 15px; background: rgba(255,255,255,.035); border-radius: 10px; border: 1px solid var(--line); }
+    .quality-card span { display: block; color: var(--muted); font-size: 12px; }
+    .quality-card strong { display: block; margin-top: 6px; font-size: 25px; }
+    .quality-card.issue strong { color: var(--yellow); }
+    .note { color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .footer-note { color: #60758c; text-align: center; font-size: 12px; margin-top: 30px; }
+    @media (max-width: 1500px) { .filter-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filter-actions { grid-column: 1 / -1; justify-content: flex-end; margin-top: 0; } }
+    @media (max-width: 1180px) { .app-shell { grid-template-columns: 204px minmax(0,1fr); } .content, .topbar { padding-left: 24px; padding-right: 24px; } .kpis { grid-template-columns: repeat(3, 1fr); } .kpis.chain-kpis { grid-template-columns: repeat(6, minmax(0,1fr)); } .chain-kpi:nth-child(n+4) { grid-column: span 3; } .chain-filter-controls { grid-template-columns: repeat(3, minmax(0,1fr)); } .grid-2, .grid-3, .overview-workload-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) { .app-shell { display: block; } .sidebar { position: sticky; top: 0; height: auto; max-height: 42vh; overflow-y: auto; padding: 14px; border-right: 0; border-bottom: 1px solid var(--line); box-shadow: 0 8px 18px rgba(0,0,0,.2); } .brand { display: flex; align-items: center; gap: 12px; padding: 2px; } .brand-mark { margin: 0; } .brand p { margin: 0; } .nav-group { display: flex; overflow-x: auto; align-items: flex-start; padding-bottom: 2px; } .nav-label, .sidebar-note { display: none; } .nav-entry { display: flex; flex: 0 0 auto; align-items: center; } .nav-entry.active { background: transparent; } .nav-button { width: auto; white-space: nowrap; padding: 8px 11px; } .nav-expand { width: 24px; } .nav-submenu { position: absolute; z-index: 40; top: 100%; left: 0; right: auto; min-width: 240px; max-width: calc(100vw - 28px); max-height: 30vh; overflow-y: auto; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: #0b1627; box-shadow: 0 12px 28px rgba(0,0,0,.38); } .nav-entry { position: relative; } .topbar { padding: 22px 16px 17px; align-items: flex-start; } .topbar h2 { font-size: 21px; } .top-actions { flex-direction: column; align-items: flex-end; } .content { padding: 18px 16px 30px; } .filter-bar { grid-template-columns: minmax(0, 1fr); gap: 10px; } .filter-actions { grid-column: auto; display: grid; grid-template-columns: 1fr 1fr; margin-top: 0; } .chain-filter-controls { grid-template-columns: repeat(2, minmax(0,1fr)); } .chain-filter-controls .field:first-child { grid-column: 1 / -1; } .overview-search-controls { grid-template-columns: minmax(0, 1fr); } .warehouse-timeout-head { align-items: stretch; } .warehouse-timeout-controls { width: 100%; margin-left: 0; } .warehouse-timeout-controls label { flex: 1; } .kpis { grid-template-columns: repeat(2, 1fr); } .kpis.chain-kpis { grid-template-columns: repeat(2, minmax(0,1fr)); } .chain-kpi, .chain-kpi:nth-child(n+4) { grid-column: span 1; } .chain-kpi:last-child { grid-column: 1 / -1; } .kpi { min-height: 118px; padding: 14px; } .kpi-value { font-size: 25px; } .source-banner { align-items: flex-start; flex-direction: column; } .quality-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 420px) { .kpis { grid-template-columns: 1fr; } .quality-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <section class="welcome-intro" id="welcome-intro" role="dialog" aria-modal="true" aria-labelledby="intro-title" aria-describedby="intro-welcome">
+    <div class="intro-grid" aria-hidden="true"></div>
+    <div class="intro-orbit" aria-hidden="true"></div>
+    <svg class="intro-routes" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <path class="intro-route" pathLength="1" d="M0 650H190L330 510H430 M1010 390H1130L1270 250H1440"/>
+      <path class="intro-route warm" pathLength="1" d="M0 230H160L290 360H430 M1010 560H1170L1300 690H1440"/>
+      <path class="intro-route late" pathLength="1" d="M160 900V740L310 590H390 M1280 0V150L1130 300H1050"/>
+      <g class="intro-node"><circle cx="330" cy="510" r="4"/><circle cx="1270" cy="250" r="4"/><circle cx="310" cy="590" r="3"/><circle cx="1130" cy="300" r="3"/></g>
+      <g class="intro-node warm"><circle cx="290" cy="360" r="4"/><circle cx="1170" cy="560" r="4"/></g>
+    </svg>
+    <div class="intro-corner" aria-hidden="true">B2B / OPERATIONS INTELLIGENCE</div>
+    <div class="intro-content">
+      <div class="intro-emblem" aria-hidden="true"><svg viewBox="0 0 68 68"><path d="M34 3 61 19v30L34 65 7 49V19Z" opacity=".45"/><path d="M21 43h26M25 34h18M29 25h10" stroke-width="3"/><path d="M34 12v5M34 51v5M15 34h4M49 34h4" opacity=".6"/></svg></div>
+      <p class="intro-kicker" aria-hidden="true">LOGISTICS OPERATIONS CONTROL TOWER</p>
+      <h1 class="intro-title" id="intro-title"><span>B2B</span> 物流塔</h1>
+      <div class="intro-rule" aria-hidden="true"></div>
+      <p class="intro-welcome" id="intro-welcome">欢迎您</p>
+      <p class="intro-caption">全链路洞察 · 让每一次交付尽在掌握</p>
+    </div>
+    <div class="intro-footer">
+      <div class="intro-progress" aria-hidden="true">即将进入驾驶舱<div class="intro-progress-track"></div></div>
+      <button class="intro-skip" id="intro-skip" type="button">跳过开场 <small>ESC</small></button>
+    </div>
+  </section>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">塔</div>
+        <div><h1>B2B 物流控制塔</h1><p>SOO 运营监控与播报</p></div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-heading"><div class="nav-label">工作台</div><button class="back-top-button" id="back-to-top" type="button" aria-label="返回页面顶部" hidden><span aria-hidden="true">↑</span>返回顶部</button></div>
+        <div class="nav-entry active" data-nav-entry="overview"><button class="nav-button" data-page="overview"><span class="nav-icon">01</span>总览驾驶舱</button><button class="nav-expand" type="button" aria-label="展开总览驾驶舱子模块" aria-expanded="true">⌄</button><div class="nav-submenu" data-nav-submenu="overview"></div></div>
+        <div class="nav-entry" data-nav-entry="warehouse"><button class="nav-button" data-page="warehouse"><span class="nav-icon">02</span>仓库监控</button><button class="nav-expand" type="button" aria-label="展开仓库监控子模块" aria-expanded="false">⌄</button><div class="nav-submenu" data-nav-submenu="warehouse" hidden></div></div>
+        <div class="nav-entry" data-nav-entry="carrier"><button class="nav-button" data-page="carrier"><span class="nav-icon">03</span>承运商监控</button><button class="nav-expand" type="button" aria-label="展开承运商监控子模块" aria-expanded="false">⌄</button><div class="nav-submenu" data-nav-submenu="carrier" hidden></div></div>
+        <div class="nav-entry" data-nav-entry="orders"><button class="nav-button" data-page="orders"><span class="nav-icon">04</span>订单与异常</button><button class="nav-expand" type="button" aria-label="展开订单与异常子模块" aria-expanded="false">⌄</button><div class="nav-submenu" data-nav-submenu="orders" hidden></div></div>
+        <div class="nav-entry" data-nav-entry="chain"><button class="nav-button" data-page="chain"><span class="nav-icon">05</span>链路监控</button><button class="nav-expand" type="button" aria-label="展开链路监控子模块" aria-expanded="false">⌄</button><div class="nav-submenu" data-nav-submenu="chain" hidden></div></div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">运行</div>
+        <div class="nav-entry" data-nav-entry="quality"><button class="nav-button" data-page="quality"><span class="nav-icon">06</span>数据质量</button><button class="nav-expand" type="button" aria-label="展开数据质量子模块" aria-expanded="false">⌄</button><div class="nav-submenu" data-nav-submenu="quality" hidden></div></div>
+      </div>
+      <div class="sidebar-note" id="sidebar-note">正在读取本机数据库中的 TMS 报表批次。</div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div><div class="eyebrow">Operations control tower</div><h2 id="page-title">总览驾驶舱</h2></div>
+        <div class="top-actions"><div class="sync-chip"><span class="status-dot text-green"></span><strong>数据可用</strong> · <span id="sync-time">加载中</span></div><button class="button-primary" id="broadcast-btn">生成并下载 BI 报表</button></div>
+      </header>
+      <div class="content">
+        <div class="filter-bar">
+          <div class="field"><label for="date-toggle">提货日期（可多选）</label><div class="date-multiselect"><button class="date-toggle" id="date-toggle" type="button" aria-expanded="false">选择提货日期</button><div class="date-options" id="date-options"></div></div><small class="field-hint">应提日口径：生产日期 + 1天；生产日当天 00:00–12:00（含12:00）另计入当天</small></div>
+          <div class="field"><label for="production-date-toggle">生产日期（可多选）</label><div class="production-date-multiselect"><button class="date-toggle" id="production-date-toggle" type="button" aria-expanded="false">全部生产日期</button><div class="date-options" id="production-date-options"></div></div></div>
+          <div class="field"><label for="region-toggle">统仓区域</label><div class="multi-select" id="region-multiselect"><button class="date-toggle multi-toggle" id="region-toggle" type="button" aria-expanded="false">全部统仓</button><div class="multi-options" id="region-options" role="group" aria-label="统仓区域多选"><div class="multi-actions"><button type="button" data-action="all">全选</button><button type="button" data-action="invert">反选</button><button type="button" data-action="reset">重置筛选</button></div><input class="multi-search" id="region-search" type="search" placeholder="筛选统仓区域" aria-label="搜索统仓区域选项" /><div class="multi-items" id="region-items"></div></div></div></div>
+          <div class="field"><label for="warehouse-toggle">仓库</label><div class="multi-select" id="warehouse-multiselect"><button class="date-toggle multi-toggle" id="warehouse-toggle" type="button" aria-expanded="false">全部仓库</button><div class="multi-options" id="warehouse-options" role="group" aria-label="仓库多选"><div class="multi-actions"><button type="button" data-action="all">全选</button><button type="button" data-action="invert">反选</button><button type="button" data-action="reset">重置筛选</button></div><input class="multi-search" id="warehouse-search" type="search" placeholder="搜索仓库" aria-label="搜索仓库选项" /><div class="multi-items" id="warehouse-items"></div></div></div></div>
+          <div class="field"><label for="channel-toggle">渠道</label><div class="multi-select" id="channel-multiselect"><button class="date-toggle multi-toggle" id="channel-toggle" type="button" aria-expanded="false">全部渠道</button><div class="multi-options" id="channel-options" role="group" aria-label="渠道多选"><div class="multi-actions"><button type="button" data-action="all">全选</button><button type="button" data-action="invert">反选</button><button type="button" data-action="reset">重置筛选</button></div><input class="multi-search" id="channel-search" type="search" placeholder="搜索渠道" aria-label="搜索渠道选项" /><div class="multi-items" id="channel-items"></div></div></div></div>
+          <div class="field"><label for="carrier-toggle">承运商</label><div class="multi-select" id="carrier-multiselect"><button class="date-toggle multi-toggle" id="carrier-toggle" type="button" aria-expanded="false">全部承运商</button><div class="multi-options" id="carrier-options" role="group" aria-label="承运商多选"><div class="multi-actions"><button type="button" data-action="all">全选</button><button type="button" data-action="invert">反选</button><button type="button" data-action="reset">重置筛选</button></div><input class="multi-search" id="carrier-search" type="search" placeholder="搜索承运商" aria-label="搜索承运商选项" /><div class="multi-items" id="carrier-items"></div></div></div></div>
+          <div class="filter-actions"><button class="button-quiet" id="reset-filters" type="button" title="恢复默认提货日期并清除生产日期、仓库、统仓区域、渠道、承运商筛选">重置筛选</button><button class="button-quiet" id="export-btn">导出当前明细</button></div>
+        </div>
+        <div id="filter-hint" class="filter-hint">选择仓库后，承运商将按线路表关系收窄。</div>
+        <div class="source-banner"><span><strong id="batch-label">数据库批次</strong> · 最近源数据更新时间 <span id="source-time">加载中</span> · 业务日期覆盖 <span id="date-range">加载中</span></span><span>主键识别：域 + SOO订单号</span></div>
+        <div class="source-banner" id="collection-status" role="status" aria-live="polite">正在读取 TMS 采集状态。</div>
+
+        <section class="page active" id="page-overview">
+          <div class="panel section"><div class="section-head"><h3>订单明细查询</h3><span>支持 SOO 订单号与 SP 运单ID模糊匹配</span></div><div class="overview-search-controls"><div class="field"><label for="overview-soo-search">SOO订单号</label><input id="overview-soo-search" type="search" placeholder="输入 SOO 订单号关键字" autocomplete="off" /></div><div class="field"><label for="overview-sp-search">SP单号（运单ID）</label><input id="overview-sp-search" type="search" placeholder="输入 SP 单号关键字" autocomplete="off" /></div></div><div id="overview-search-count" class="orders-count">请输入 SOO 单号或 SP 单号进行查询</div><div id="overview-search-results"></div></div>
+          <div class="kpis" id="kpis"></div>
+          <div class="volume-kpi-heading">方数体积指标 · 来源 TMS AK（m³）</div>
+          <div class="kpis volume-kpis" id="volume-kpis" aria-label="方数体积指标"></div>
+          <div class="panel section"><div class="section-head"><h3>当日已出库</h3><span>SOO 关联 · AQ 实际发货时间非空</span></div><div class="outbound-kpis" id="outbound-summary"></div><p class="note" id="outbound-source-note"></p></div>
+          <div class="panel section"><div class="section-head"><div><h3>已出库订单查询</h3><span>支持 SOO / SP 单号模糊查询与渠道多选筛选</span></div><button class="button-quiet" id="outbound-detail-open" type="button">具体明细窗口</button></div><div class="overview-search-controls"><div class="field"><label for="outbound-soo-search">SOO订单号</label><input id="outbound-soo-search" type="search" placeholder="输入 SOO 订单号关键字" autocomplete="off" /></div><div class="field"><label for="outbound-sp-search">SP单号（运单ID）</label><input id="outbound-sp-search" type="search" placeholder="输入 SP 单号关键字" autocomplete="off" /></div></div><div class="field outbound-channel-filter"><label for="outboundChannel-toggle">渠道（可多选）</label><div class="multi-select" id="outboundChannel-multiselect"><button class="date-toggle multi-toggle" id="outboundChannel-toggle" type="button" aria-expanded="false">全部渠道</button><div class="multi-options" id="outboundChannel-options" role="group" aria-label="已出库订单渠道多选"><div class="multi-actions"><button type="button" data-action="all">全选</button><button type="button" data-action="invert">反选</button><button type="button" data-action="reset">重置筛选</button></div><input class="multi-search" id="outboundChannel-search" type="search" placeholder="搜索渠道" aria-label="搜索已出库渠道选项" /><div class="multi-items" id="outboundChannel-items"></div></div></div></div><div id="outbound-search-count" class="orders-count">当前筛选范围内的已出库明细</div><div id="outbound-search-results"></div></div>
+          <div class="panel section" id="warehouse-production-panel"><div class="section-head"><div><h3>仓库生产进度</h3><span>按实体仓库汇总四个生产环节 · 已完成 /（未完成 + 已完成）</span></div><span>工作簿数据</span></div><div id="warehouse-production-progress"></div><p class="warehouse-production-note">来源为本次提供的《2B未完成订单进度监控》工作簿快照，独立于 TMS 订单批次与总览筛选条件。</p></div>
+          <div class="overview-workload-grid section">
+            <div class="panel"><div class="hourly-outbound-section"><div class="section-head"><h5>仓库每小时出库效率</h5><span id="hourly-outbound-date"></span></div><p class="hourly-outbound-note">该小时总出库单量（Q列）÷ 同仓同日总出库单量；数据源未提供承运商、渠道维度。</p><div id="hourly-outbound-efficiency"></div></div><div class="pickup-efficiency-section"><div class="section-head"><h5>每小时提货效率</h5><span id="pickup-efficiency-date"></span></div><p class="pickup-efficiency-note">以每小时保存的一份 TMS 完整数据源快照为基础，对比相邻小时的物流状态变化；首次快照建立基线，不计入提货量。每小时提货方数和方数占比按仓库 × 承运商展示；当日需提方数为该承运商当日计划提货方数（跨仓合计），累计方数按同一承运商跨仓累计，且等于当日需提方数 × 累计方数达成率。实际提货时刻仅能确定在两次快照之间；缺失小时会保留观察区间并标注长间隔。</p><div id="pickup-efficiency-snapshot-status" class="pickup-efficiency-note"></div><div id="pickup-efficiency-summary" class="pickup-efficiency-summary"></div><div id="pickup-efficiency-table"></div></div></div>
+            <div class="panel carrier-volume-panel"><h4>承运商达成</h4><div class="panel-sub">当日应提计划与当前物流状态已提方数（m³）</div><div id="carrier-bars" class="bar-list carrier-volume-bars"></div></div>
+          </div>
+          <div class="panel section"><div class="section-head"><h3>风险播报</h3><span>按当前筛选生成</span></div><div id="alert-list" class="alert-list"></div></div>
+        </section>
+
+        <section class="page" id="page-warehouse"><div class="section-head"><h3>仓库监控</h3><span>生产完成与待提风险</span></div><div class="grid-2"><div class="panel"><div class="section-head warehouse-timeout-head"><h4>仓库超时</h4><div class="warehouse-timeout-controls"><label for="warehouse-timeout-filter">超时条件<select id="warehouse-timeout-filter" aria-label="按是否超时筛选仓库"><option value="all">全部仓库</option><option value="overdue">存在超时</option><option value="clear">无超时</option></select></label><button class="button-quiet" id="warehouse-overdue-download" type="button">具体明细窗口</button></div></div><div class="warehouse-timeout-note">超时口径：已装载、当前未提，且最晚提货时间早于所选日期截止日，或截止日当天 18:00 前。</div><div id="warehouse-timeout-count" class="panel-sub"></div><div id="warehouse-detail"></div></div><div class="panel"><h4>仓库口径</h4><p class="note">当前仓库维度直接来自 SOO 的起始地字段。生产完成只计入可解析的装载完成时间，空值或非法时间不会被当成完成。</p><div id="warehouse-summary" class="alert-list"></div></div></div></section>
+
+        <section class="page" id="page-carrier"><div class="section-head"><h3>承运商监控</h3><span>当日应提计划与当前物流状态拆分</span></div><div class="panel"><div class="section-head"><h4>承运商提货状态</h4><div class="carrier-risk-actions"><label for="carrier-pickup-status-filter">物流提货状态 <select id="carrier-pickup-status-filter" aria-label="按物流提货状态筛选承运商"><option value="all">全部状态</option><option value="picked">已提货</option><option value="pending">未提货</option></select></label><button class="button-quiet" id="carrier-detail-export" type="button">导出具体明细</button></div></div><p class="carrier-time-note">按物流状态判定：开放、委托、确认视为未提货，其余有效状态视为已提货。</p><div id="carrier-risk-count" class="panel-sub"></div><div id="carrier-detail"></div></div><div class="panel section"><h4>承运商风险说明</h4><p class="note">应提量按业务日期对应的 TMS 生产日期（业务日期前一日）汇总；提货完成按当前 TMS 物流状态判断。当前未接入运力配置，因此不展示虚构的运力缺口。</p></div></section>
+
+        <section class="page" id="page-orders"><div class="section-head"><h3>订单与异常</h3><span>SOO 级事实明细</span></div><div class="panel"><p class="note">方数展示数据源 AK 原值；同一 SP 包含多个 SOO 时，SP 合单方数按既定规则只计一次，请勿直接累加明细行的方数。</p><div class="orders-controls"><div class="field"><label for="search-filter">搜索 SOO / 发货单 / 运单 / 目的地</label><input id="search-filter" placeholder="输入关键词" /></div><div class="field status-field"><label for="order-status-filter">状态条件</label><select id="order-status-filter" aria-label="按订单状态筛选"><option value="all">全部状态</option></select></div><button class="button-quiet" id="order-status-open" type="button">状态明细窗口</button></div><div id="orders-count" class="orders-count"></div><div id="orders-table"></div></div></section>
+
+        <section class="page" id="page-chain"><div class="section-head"><h3>链路监控</h3><span>按所选业务日期对应生产日统计 SP 合单数</span><button class="button-quiet" id="chain-missing-open">链路时间缺失明细（0）</button></div><div class="panel"><p class="note">链路：TMS 建单（G 列）→ 仓库装载完成（J 列）→ 物流进入园区（L 列）→ 物流离开园区（N 列）。相同运单ID（SP）按一个合单计算完成率与时长样本；明细仍按 SOO 展开。</p><div id="chain-overview" class="kpis chain-kpis"></div><div id="chain-warning" class="alert-list section"></div></div><div class="panel section"><div class="section-head"><h4>订单链路时间线</h4><span id="chain-count"></span></div><div class="chain-filter-controls" role="search" aria-label="订单链路时间线筛选"><label class="field" for="chain-soo-filter"><span>SOO订单号</span><input id="chain-soo-filter" type="search" placeholder="输入SOO订单号" autocomplete="off" /></label><label class="field" for="chain-warehouse-filter"><span>仓库</span><select id="chain-warehouse-filter"><option value="">全部仓库</option></select></label><label class="field" for="chain-carrier-filter"><span>承运商</span><select id="chain-carrier-filter"><option value="">全部承运商</option></select></label><label class="field" for="chain-tms-date-filter"><span>TMS建单日期</span><input id="chain-tms-date-filter" type="date" aria-label="筛选TMS建单日期" /></label><label class="field" for="chain-load-date-filter"><span>装载完成日期</span><input id="chain-load-date-filter" type="date" aria-label="筛选装载完成日期" /></label><button class="button-quiet" id="chain-filter-reset" type="button">重置筛选</button></div><div id="chain-table"></div></div></section>
+
+        <dialog id="chain-missing-dialog" aria-labelledby="chain-missing-title"><div class="dialog-card"><div class="section-head"><div><h3 id="chain-missing-title">链路时间缺失明细</h3><span id="chain-missing-count"></span></div><button class="button-quiet" id="chain-missing-close" type="button">关闭</button></div><p class="note">列出当前筛选范围内，装载完成时间、围栏进入时间或围栏离开时间至少一项为空的 SOO，并标出缺失环节。</p><div id="chain-missing-table"></div><div class="dialog-actions"><button class="button-primary" id="chain-missing-download" type="button">下载 CSV 明细</button></div></div></dialog>
+        <dialog id="order-status-dialog" aria-labelledby="order-status-title"><div class="dialog-card"><div class="section-head"><div><h3 id="order-status-title">订单状态明细</h3><span id="order-status-count"></span></div><button class="button-quiet" id="order-status-close" type="button">关闭</button></div><p class="note">明细跟随当前业务日期、仓库、承运商、渠道、关键词及状态筛选。</p><div id="order-status-table"></div><div class="dialog-actions"><button class="button-primary" id="order-status-download" type="button">下载 CSV 明细</button></div></div></dialog>
+        <dialog id="warehouse-overdue-dialog" aria-labelledby="warehouse-overdue-title"><div class="dialog-card"><div class="section-head"><div><h3 id="warehouse-overdue-title">仓库具体明细</h3><span id="warehouse-overdue-count"></span></div><button class="button-quiet" id="warehouse-overdue-close" type="button">关闭</button></div><p class="note">明细根据超时条件及当前业务日期、仓库、承运商和渠道筛选生成；可在下表核对超时状态后下载。</p><div id="warehouse-overdue-table"></div><div class="dialog-actions"><button class="button-primary" id="warehouse-overdue-csv" type="button">下载 CSV 明细</button></div></div></dialog>
+
+
+        <dialog id="outbound-detail-dialog" aria-labelledby="outbound-detail-title"><div class="dialog-card"><div class="section-head"><div><h3 id="outbound-detail-title">当日已出库具体明细</h3><span id="outbound-detail-count"></span></div><button class="button-quiet" id="outbound-detail-close" type="button">关闭</button></div><p class="note">明细跟随当前提货日期、生产日期、统仓区域、仓库、承运商和全局渠道筛选，并叠加本模块渠道、SOO / SP 关键字。已出库判定仍为 AQ 实际发货时间非空。</p><div id="outbound-detail-table"></div><div class="dialog-actions"><button class="button-primary" id="outbound-detail-download" type="button">下载 CSV 明细</button></div></div></dialog>
+        <section class="page" id="page-quality"><div class="section-head"><h3>数据质量</h3><span>导入闸门与可追溯性</span></div><div class="panel"><div id="quality-grid" class="quality-grid"></div><div class="section"><h4>本批次处理结果</h4><p id="quality-note" class="note"></p></div><div class="section"><h4>人工导入 TMS 报表</h4><p class="note">仅在此设备本机使用；XLSX/CSV 原文件保存在受限目录，个人联系信息不下发到驾驶舱。</p><input id="import-file" type="file" accept=".xlsx,.csv" /><button class="button-quiet" id="import-btn" type="button">导入并校验</button><p id="import-result" class="note" role="status"></p></div><div class="section"><h4>质量规则</h4><div id="quality-rules" class="alert-list"></div></div></div></section>
+        <div class="footer-note">当前为本机数据库中的最近成功批次，不代表 TMS 实时状态；业务时区 Asia/Shanghai。上线多人访问前仍需统一身份认证与权限控制。</div>
+      </div>
+    </main>
+  </div>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const overlay = document.getElementById('welcome-intro');
+      const shell = document.querySelector('.app-shell');
+      const skip = document.getElementById('intro-skip');
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+      let timer, exitTimer, leaving = false;
+      function complete() {
+        clearTimeout(timer); clearTimeout(exitTimer); clearTimeout(window.introFallback);
+        root.classList.remove('intro-active', 'intro-entering');
+        overlay.classList.remove('is-leaving');
+        shell.inert = false;
+        if (document.activeElement === skip) {
+          const title = document.getElementById('page-title');
+          title.setAttribute('tabindex', '-1');
+          title.focus({ preventScroll: true });
+        }
+      }
+      function finish(immediate = false) {
+        if (!root.classList.contains('intro-active') || leaving) return;
+        leaving = true;
+        clearTimeout(timer);
+        if (immediate || reducedMotion.matches) return complete();
+        root.classList.add('intro-entering');
+        overlay.classList.add('is-leaving');
+        exitTimer = setTimeout(complete, 450);
+      }
+      function start() {
+        clearTimeout(timer); clearTimeout(exitTimer); clearTimeout(window.introFallback);
+        leaving = false;
+        overlay.classList.remove('is-leaving');
+        root.classList.remove('intro-entering');
+        root.classList.add('intro-active');
+        shell.inert = true;
+        // No stored "seen" flag: every page open gets its own welcome.
+        skip.focus({ preventScroll: true });
+        timer = setTimeout(() => finish(), reducedMotion.matches ? 700 : 3700);
+      }
+      skip.addEventListener('click', () => finish(true));
+      document.addEventListener('keydown', event => {
+        if (root.classList.contains('intro-active') && (event.key === 'Escape' || event.key === 'Enter')) {
+          event.preventDefault(); finish(true);
+        }
+      });
+      reducedMotion.addEventListener('change', () => {
+        if (reducedMotion.matches) { if (leaving) complete(); else finish(true); }
+      });
+      window.addEventListener('pagehide', complete);
+      window.addEventListener('pageshow', event => { if (event.persisted) start(); });
+      start();
+    })();
+  </script>
+  <script src="./bi-report.js"></script>
+  <script>
+    const hourlyOutboundFallback = { source_file: '每小时出库查询.xlsx', source_sheet: '每小时出库查询', source_date: '2026-10-11', numerator_field: '总出库单量（Q列）', records: [
+      { warehouse: 'BLA-华北廊坊仓', daily_order_count: 6362, hours: { '08': 167, '09': 2175, '10': 2902, '11': 1118 } },
+      { warehouse: 'BXA-华北西安仓', daily_order_count: 4722, hours: { '08': 962, '09': 2968, '10': 674, '11': 118 } },
+      { warehouse: 'BXA4-华北西安4仓', daily_order_count: 12, hours: { '09': 12 } },
+      { warehouse: 'DCN-菜鸟新仓-BabyCare华东仓', daily_order_count: 18954, hours: { '08': 2582, '09': 5120, '10': 8454, '11': 2798 } },
+      { warehouse: 'DFZ-华东服装仓-Babycare华东仓', daily_order_count: 565, hours: { '08': 42, '09': 216, '10': 210, '11': 97 } },
+      { warehouse: 'DGH-华东光合仓', daily_order_count: 7506, hours: { '08': 1595, '09': 1872, '10': 3471, '11': 568 } },
+      { warehouse: 'DHW-恒温仓-光合华东仓', daily_order_count: 767, hours: { '07': 2, '08': 77, '09': 146, '10': 471, '11': 71 } },
+      { warehouse: 'DJK-金咖仓-Babycare华东仓', daily_order_count: 9983, hours: { '07': 514, '08': 1862, '09': 2129, '10': 4659, '11': 819 } },
+      { warehouse: 'DJK3-金咖3仓-Babycare华东仓', daily_order_count: 127, hours: { '10': 97, '11': 30 } },
+      { warehouse: 'DJK4-金咖4仓-Babycare华东仓', daily_order_count: 28, hours: { '10': 28 } },
+      { warehouse: 'DXZ-华东三方仓', daily_order_count: 372, hours: { '09': 4, '10': 215, '11': 153 } },
+      { warehouse: 'DYX-全国最优先发货仓', daily_order_count: 4260, hours: { '08': 989, '09': 2039, '10': 970, '11': 262 } },
+      { warehouse: 'NST-华南沙田仓', daily_order_count: 7428, hours: { '08': 416, '09': 2966, '10': 2879, '11': 1167 } },
+      { warehouse: 'NST4-华南沙田4仓', daily_order_count: 4, hours: { '10': 4 } },
+      { warehouse: 'ZAD-华中三方安迪兰', daily_order_count: 16, hours: { '08': 14, '11': 2 } },
+      { warehouse: 'ZPX-萍乡仓-BabyCare华中仓', daily_order_count: 44, hours: { '08': 44 } },
+      { warehouse: 'ZXG-华中孝感综合仓', daily_order_count: 27796, hours: { '07': 266, '08': 4302, '09': 9720, '10': 10387, '11': 3121 } },
+      { warehouse: 'ZXG4-华中孝感4仓', daily_order_count: 27, hours: { '09': 17, '10': 10 } }
+    ] };
+    const warehouseProductionProgress = {
+      source_file: '2B未完成订单进度监控 .xls',
+      stages: ['拣货', '分拨', '复核', '装载'],
+      warehouses: [
+        { name: '金义二期', values: [[23937,118398],[679,6740],[3589,114809],[106577,352]] },
+        { name: '金咖仓', values: [[28171,164981],[3622,17389],[40665,124316],[57215,65825]] },
+        { name: '金咖仓1', values: [[18370,56014],[2199,0],[1800,54214],[49536,4678]] },
+        { name: '金咖仓2', values: [[0,25],[0,0],[0,25],[25,0]] },
+        { name: '廊坊仓', values: [[0,1924],[141,0],[0,1924],[75,1849]] },
+        { name: '华南仓', values: [[10691,29399],[4500,4092],[4922,24477],[24477,0]] },
+        { name: '孝感仓', values: [[0,177671],[0,0],[41527,136144],[121102,11050]] }
+      ]
+    };
+    const state = { data: null, outboundBySoo: {}, outboundSource: null, pickupTransitions: [], pickupSnapshotInfo: null, pickupTransitionError: '', pickupFilters: { observationPeriods: null, warehouse: null, carrier: null }, pickupDetailRows: [], hourlyOutbound: hourlyOutboundFallback, warehouseCarriers: {}, warehouseRegions: {}, page: 'overview', dates: [], dateSelectionCleared: false, productionDates: null, region: [], warehouse: [], carrier: [], channel: [], outboundChannel: null, carrierPickupStatus: 'all', warehouseTimeout: 'all', orderStatus: 'all', optionSearch: { region: '', warehouse: '', carrier: '', channel: '', outboundChannel: '' }, query: '', overviewSearch: { soo: '', sp: '', pageNo: 1 }, outboundSearch: { soo: '', sp: '', pageNo: 1 }, chainFilters: { soo: '', warehouse: '', carrier: '', tmsDate: '', loadDate: '' }, pageNo: 1, pageSize: 12 };
+    const filterStorageKey = 'b2b-logistics-tower-filters-v1';
+    function persistFilterState() {
+      try {
+        const filters = {
+          dates: state.dates, dateSelectionCleared: state.dateSelectionCleared, productionDates: state.productionDates,
+          region: state.region, warehouse: state.warehouse, carrier: state.carrier, channel: state.channel,
+          outboundChannel: state.outboundChannel, carrierPickupStatus: state.carrierPickupStatus,
+          warehouseTimeout: state.warehouseTimeout, orderStatus: state.orderStatus, optionSearch: state.optionSearch,
+          query: state.query, overviewSearch: { soo: state.overviewSearch.soo, sp: state.overviewSearch.sp },
+          outboundSearch: { soo: state.outboundSearch.soo, sp: state.outboundSearch.sp },
+          chainFilters: state.chainFilters, pickupFilters: state.pickupFilters,
+        };
+        localStorage.setItem(filterStorageKey, JSON.stringify(filters));
+      } catch {}
+    }
+    function restoreFilterState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(filterStorageKey) || 'null');
+        if (!saved || typeof saved !== 'object') return;
+        const arrayKeys = ['dates', 'region', 'warehouse', 'carrier', 'channel'];
+        arrayKeys.forEach(key => { if (Array.isArray(saved[key])) state[key] = saved[key].filter(value => typeof value === 'string'); });
+        ['productionDates', 'outboundChannel'].forEach(key => {
+          if (saved[key] === null || Array.isArray(saved[key])) state[key] = Array.isArray(saved[key]) ? saved[key].filter(value => typeof value === 'string') : null;
+        });
+        state.dateSelectionCleared = Boolean(saved.dateSelectionCleared);
+        ['carrierPickupStatus', 'warehouseTimeout', 'orderStatus', 'query'].forEach(key => { if (typeof saved[key] === 'string') state[key] = saved[key]; });
+        if (saved.optionSearch && typeof saved.optionSearch === 'object') Object.keys(state.optionSearch).forEach(key => { if (typeof saved.optionSearch[key] === 'string') state.optionSearch[key] = saved.optionSearch[key]; });
+        ['overviewSearch', 'outboundSearch'].forEach(key => {
+          if (saved[key] && typeof saved[key] === 'object') ['soo', 'sp'].forEach(field => { if (typeof saved[key][field] === 'string') state[key][field] = saved[key][field]; });
+        });
+        if (saved.chainFilters && typeof saved.chainFilters === 'object') Object.keys(state.chainFilters).forEach(key => { if (typeof saved.chainFilters[key] === 'string') state.chainFilters[key] = saved.chainFilters[key]; });
+        if (saved.pickupFilters && typeof saved.pickupFilters === 'object') Object.keys(state.pickupFilters).forEach(key => {
+          if (saved.pickupFilters[key] === null || Array.isArray(saved.pickupFilters[key])) state.pickupFilters[key] = Array.isArray(saved.pickupFilters[key]) ? saved.pickupFilters[key].filter(value => typeof value === 'string') : null;
+        });
+        $('search-filter').value = state.query;
+        $('overview-soo-search').value = state.overviewSearch.soo; $('overview-sp-search').value = state.overviewSearch.sp;
+        $('outbound-soo-search').value = state.outboundSearch.soo; $('outbound-sp-search').value = state.outboundSearch.sp;
+        ['region', 'warehouse', 'carrier', 'channel', 'outboundChannel'].forEach(key => { $(`${key}-search`).value = state.optionSearch[key] || ''; });
+        $('carrier-pickup-status-filter').value = state.carrierPickupStatus;
+        $('warehouse-timeout-filter').value = state.warehouseTimeout;
+        $('chain-soo-filter').value = state.chainFilters.soo;
+        $('chain-tms-date-filter').value = state.chainFilters.tmsDate;
+        $('chain-load-date-filter').value = state.chainFilters.loadDate;
+      } catch {}
+    }
+    const filterValues = { region: [], warehouse: [], carrier: [], channel: [], outboundChannel: [] };
+    const $ = (id) => document.getElementById(id);
+    restoreFilterState();
+    const esc = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const fmt = (value, digits = 0) => new Intl.NumberFormat('zh-CN', { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(Number(value || 0));
+    const pct = (value) => value == null || !Number.isFinite(value) ? '—' : `${fmt(value * 100, 1)}%`;
+    const dateOnly = (iso) => iso ? iso.slice(0, 10) : '';
+    const durationMinutes = (start, end) => { if (!start || !end) return null; const a = Date.parse(start), b = Date.parse(end); if (!Number.isFinite(a) || !Number.isFinite(b) || b < a) return null; return (b - a) / 60000; };
+    const durationLabel = (minutes) => minutes == null ? '—' : minutes < 60 ? `${fmt(minutes, 0)} 分钟` : `${fmt(minutes / 60, 1)} 小时`;
+    const median = (values) => { if (!values.length) return null; const sorted = [...values].sort((a, b) => a - b), middle = Math.floor(sorted.length / 2); return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2; };
+    const readableTimestamp = (value) => {
+      if (!value) return '';
+      const date = new Date(value);
+      if (!Number.isFinite(date.getTime())) return String(value).replace('T', ' ').replace(/(?:Z|[+-]\d{2}:?\d{2})$/, '');
+      const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(date).map(part => [part.type, part.value]));
+      return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
+    };
+    const readableHourSlot = (value) => { const hour = String(value || '').slice(0, 13); return hour ? `${hour.replace('T', ' ')}:00` : ''; };
+    const eventLabel = (value) => value ? readableTimestamp(value) : '—';
+    const productionLabel = (row) => row.production_at ? eventLabel(row.production_at) : row.production_date || '—';
+    const prevDate = (day) => { const d = new Date(`${day}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); };
+    const nextDate = (day) => { const d = new Date(`${day}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
+    const labelDate = (day) => day ? day.replaceAll('-', '.') : '—';
+    const todayBusinessDate = () => { const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()).map(part => [part.type, part.value])); return `${parts.year}-${parts.month}-${parts.day}`; };
+    const defaultBusinessDate = (dates) => dates.includes(todayBusinessDate()) ? todayBusinessDate() : dates[dates.length - 1];
+    const recentBusinessDates = (dates, today = todayBusinessDate()) => { const earliest = prevDate(prevDate(today)); return [...new Set(dates.filter(date => date >= earliest && date <= today))].sort(); };
+    const containsSelfPickup = (value) => typeof value === 'string' ? value.includes('自提') : Array.isArray(value) ? value.some(containsSelfPickup) : value && typeof value === 'object' ? Object.values(value).some(containsSelfPickup) : false;
+    const isPresentationRecord = (row) => !containsSelfPickup(row);
+    const presentationRows = () => (state.data?.records || []).filter(isPresentationRecord);
+    const availableBusinessDates = () => recentBusinessDates([...new Set(presentationRows().flatMap(rowBusinessDates).filter(Boolean))]);
+    const rowBusinessDates = (row) => {
+      if (!row.production_date) return [];
+      const dates = [nextDate(row.production_date)];
+      const productionTime = String(row.production_at || '').slice(11, 19);
+      if (productionTime && productionTime <= '12:00:00') dates.push(row.production_date);
+      return [...new Set(dates)].sort();
+    };
+    const rowBelongsToBusinessDate = (row, day) => rowBusinessDates(row).includes(day);
+    const rowMatchesSelectedBusinessDates = (row) => state.dates.some(day => rowBelongsToBusinessDate(row, day));
+    const rowMatchesSelectedProductionDates = (row) => state.productionDates === null || state.productionDates.includes(row.production_date);
+    const actualShipmentAt = (row) => state.outboundBySoo[String(row.soo_no || '').trim()]?.actual_shipment_at || '';
+    const pickupPendingStatuses = new Set(['开放', '委托', '确认']);
+    const isPickedUp = (row) => {
+      if (typeof row.is_picked_up === 'boolean') return row.is_picked_up;
+      const status = String(row.tms_status || '').trim();
+      return Boolean(status && status !== '未知' && !pickupPendingStatuses.has(status));
+    };
+    const selectedDateLabel = () => { const dates = availableBusinessDates(); return dates.length && dates.every(date => state.dates.includes(date)) ? `全部日期（${dates.length}日）` : state.dates.length > 2 ? `${labelDate(state.dates[0])} 等 ${state.dates.length} 日` : state.dates.map(labelDate).join('、') || '请选择提货日期'; };
+    const sum = (rows, key) => rows.reduce((total, row) => total + (Number(row[key]) || 0), 0);
+    const volumeValue = row => row.gross_cbm == null || row.gross_cbm === '' || !Number.isFinite(Number(row.gross_cbm)) ? null : Number(row.gross_cbm);
+    const spKey = row => { const waybill = String(row.waybill_id || '').trim(); return waybill ? `SP:${waybill.toUpperCase()}` : `SOO:${row.domain_code || ''}:${row.soo_no || row.row_no || ''}`; };
+    const spGroups = rows => { const groups = new Map(); rows.forEach(row => { const key = spKey(row); if (!groups.has(key)) groups.set(key, []); groups.get(key).push(row); }); return groups; };
+    const spCount = rows => spGroups(rows).size;
+    const spVolume = rows => { const values = rows.map(volumeValue).filter(value => value != null); if (!values.length) return 0; const counts = new Map(); values.forEach(value => counts.set(value, (counts.get(value) || 0) + 1)); const maxCount = Math.max(...counts.values()); return values.find(value => counts.get(value) === maxCount) ?? 0; };
+    const sumVolume = rows => [...spGroups(rows).values()].reduce((total, group) => total + spVolume(group), 0);
+    const volumeCoverage = rows => [...spGroups(rows).values()].filter(group => group.some(row => volumeValue(row) != null)).length;
+    const volumeCoverageHint = (label, rows) => volumeCoverage(rows) < spCount(rows) ? ` · ${label}方数有效 ${fmt(volumeCoverage(rows))}/${fmt(spCount(rows))} 个SP` : '';
+    const unique = (rows, key) => [...new Set(rows.map(row => row[key]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'zh-CN'));
+    const warehouseRegion = (row) => {
+      const name = String(row.warehouse_name || '').trim();
+      const exactRegion = state.warehouseRegions[name];
+      if (exactRegion) return exactRegion;
+      // Exact mapping wins; these ordered keyword fallbacks cover new warehouse variants.
+      if (name.startsWith('华东光合')) return '华东光合仓';
+      if (name.startsWith('华东')) return '华东仓';
+      if (name.includes('沙田')) return '华南仓';
+      if (name.includes('华北廊坊') || name.includes('廊坊')) return '廊坊仓';
+      if (name.includes('湖州优全') || name.includes('优全')) return '优全工厂仓';
+      return '未映射仓库';
+    };
+    const selectionIncludes = (selection, value) => selection === null || selection.length === 0 || selection.includes(value);
+    const selectedOptionValues = (key) => state[key] === null ? filterValues[key].slice() : state[key].filter(value => filterValues[key].includes(value));
+    const selectionSummary = (key, allLabel) => state[key] === null ? allLabel : state[key].length === 0 ? '未选择' : state[key].join('、');
+    const matchesFilters = (row) => selectionIncludes(state.region, warehouseRegion(row)) && selectionIncludes(state.warehouse, row.warehouse_name) && selectionIncludes(state.carrier, row.carrier_name) && selectionIncludes(state.channel, row.channel);
+    const visibleRows = () => presentationRows().filter(matchesFilters);
+    const dateRows = () => visibleRows().filter(rowMatchesSelectedProductionDates).filter(rowMatchesSelectedBusinessDates);
+    const searchRows = () => dateRows().filter(row => { const q = state.query.trim().toLowerCase(); if (!q) return true; return [row.soo_no, row.shipping_order_id, row.waybill_id, row.dest_city, row.dest_province, row.carrier_name].some(value => String(value || '').toLowerCase().includes(q)); });
+    const metric = () => {
+      const rows = visibleRows().filter(rowMatchesSelectedProductionDates);
+      const cutoff = state.dates[state.dates.length - 1] || '';
+      const planRows = rows.filter(rowMatchesSelectedBusinessDates);
+      const doneRows = planRows.filter(r => r.is_loaded);
+      const priorPlanRows = planRows;
+      const actualRows = planRows.filter(isPickedUp);
+      const outboundRows = planRows.filter(row => Boolean(actualShipmentAt(row)));
+      const todayPickupRows = planRows.filter(r => isPickedUp(r));
+      const waitingRows = rows.filter(r => r.is_loaded && !isPickedUp(r) && rowBusinessDates(r).some(day => day <= cutoff));
+      const overdueRows = waitingRows.filter(r => r.latest_pickup_at && r.latest_pickup_at.slice(0, 10) <= cutoff && (r.latest_pickup_at.slice(0, 10) < cutoff || r.latest_pickup_at.slice(11, 16) < '18:00'));
+      const historicalRows = rows.filter(r => !isPickedUp(r) && rowBusinessDates(r).length && rowBusinessDates(r).every(day => day < cutoff));
+      return { rows, days: new Set(state.dates), cutoff, planRows, doneRows, priorPlanRows, actualRows, outboundRows, outboundOrders: new Set(outboundRows.map(row => row.soo_no)).size, outboundQty: sum(outboundRows, 'soo_qty'), outboundVolume: sumVolume(outboundRows), todayPickupRows, waitingRows, overdueRows, historicalRows, plan: sum(planRows, 'soo_qty'), done: sum(doneRows, 'soo_qty'), priorPlan: sum(priorPlanRows, 'soo_qty'), actual: sum(actualRows, 'soo_qty'), todayPickup: sum(todayPickupRows, 'soo_qty'), waiting: sum(waitingRows, 'soo_qty'), overdue: sum(overdueRows, 'soo_qty'), historical: sum(historicalRows, 'soo_qty'), planVolume: sumVolume(planRows), doneVolume: sumVolume(doneRows), priorPlanVolume: sumVolume(priorPlanRows), actualVolume: sumVolume(actualRows), waitingVolume: sumVolume(waitingRows), overdueVolume: sumVolume(overdueRows), historicalVolume: sumVolume(historicalRows) };
+    };
+    const tag = (text, tone = '') => `<span class="tag ${tone}">${esc(text)}</span>`;
+    const toneFor = (row) => row.quality_flags?.length ? 'red' : isPickedUp(row) ? 'green' : row.is_loaded ? 'yellow' : '';
+    const rowStatusText = (row) => row.quality_flags?.length ? '状态冲突' : isPickedUp(row) ? '已提货' : row.is_loaded ? '可提未提' : row.tms_status || '待处理';
+    const rowStatus = (row) => tag(rowStatusText(row), row.quality_flags?.length ? 'red' : isPickedUp(row) ? 'green' : row.is_loaded ? 'yellow' : '');
+    const renderTable = (rows, target, compact = false) => {
+      if (!rows.length) { $(target).innerHTML = '<div class="empty">当前筛选下暂无有效 SOO 记录</div>'; return; }
+      const start = compact ? 0 : (state.pageNo - 1) * state.pageSize;
+      const shown = compact ? rows.slice(0, 8) : rows.slice(start, start + state.pageSize);
+      const body = shown.map(row => `<tr><td>${esc(row.soo_no)}</td><td>${esc(row.waybill_id || '—')}</td><td>${esc(row.warehouse_name)}</td><td>${esc(row.carrier_name)}</td><td>${esc(row.channel || '—')}</td><td>${esc(row.dest_city || '—')}</td><td>${fmt(row.soo_qty)}</td><td>${volumeValue(row) == null ? '—' : `${new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(volumeValue(row))} m³`}</td><td>${esc(productionLabel(row))}</td><td>${esc(row.load_completed_at ? row.load_completed_at.slice(0, 16).replace('T', ' ') : '—')}</td><td>${rowStatus(row)}</td></tr>`).join('');
+      const pagination = compact ? '' : `<div class="pagination"><span>共 ${fmt(rows.length)} 条 · 第 ${fmt(Math.floor(start / state.pageSize) + 1)} / ${fmt(Math.max(1, Math.ceil(rows.length / state.pageSize)))} 页</span><span><button id="prev-page" ${start === 0 ? 'disabled' : ''}>上一页</button> <button id="next-page" ${(start + state.pageSize >= rows.length) ? 'disabled' : ''}>下一页</button></span></div>`;
+      $(target).innerHTML = `<div class="table-wrap"><table><thead><tr><th>SOO订单号</th><th>SP单号（运单ID）</th><th>仓库</th><th>承运商</th><th>渠道</th><th>目的地</th><th>件数</th><th>方数（AK）</th><th>生产日期时间</th><th>装载完成</th><th>状态</th></tr></thead><tbody>${body}</tbody></table></div>${pagination}`;
+      if (!compact) { $('prev-page')?.addEventListener('click', () => { state.pageNo--; render(); }); $('next-page')?.addEventListener('click', () => { state.pageNo++; render(); }); }
+    };
+    const renderBars = (target, groups, formatter, ratioFn, toneFn) => {
+      if (!groups.length) { $(target).innerHTML = '<div class="empty">暂无数据</div>'; return; }
+      $(target).innerHTML = groups.map(group => { const rawRatio = Number(ratioFn?.(group)); const ratio = Number.isFinite(rawRatio) && rawRatio > 0 ? Math.max(3, Math.min(100, rawRatio * 100)) : 0; return `<div class="bar-row"><div class="bar-name" title="${esc(group.name)}">${esc(group.name)}</div><div class="bar-track"><div class="bar-fill ${toneFn ? toneFn(group) : ''}" style="width:${ratio}%"></div></div><div class="bar-value">${formatter(group)}</div></div>`; }).join('');
+    };
+    const grouped = (rows, key, nameKey = key) => { const map = new Map(); rows.forEach(row => { const value = row[key] || '未分配'; const group = map.get(value) || { name: row[nameKey] || value, plan: 0, done: 0, actual: 0, waiting: 0, qty: 0, total: 0 }; group.qty += Number(row.soo_qty) || 0; group.total += 1; map.set(value, group); }); return [...map.values()]; };
+    const kpi = (label, value, unit, meta, tone = '') => `<div class="kpi ${tone}"><div class="kpi-label">${label}</div><div class="kpi-value">${value}<span class="kpi-unit">${unit || ''}</span></div><div class="kpi-meta">${meta}</div></div>`;
+    function renderKpis(m) {
+      $('kpis').innerHTML = [
+        kpi('当日计划提货', fmt(m.plan), '件', `来源生产日期 ${state.dates.map(day => `${labelDate(prevDate(day))}全日 + ${labelDate(day)} 00:00–12:00`).join('、') || '—'}`),
+        kpi('对应生产计划已生产', fmt(m.done), '件', `完成 ${pct(m.plan ? m.done / m.plan : null)}`, m.plan && m.done / m.plan >= .9 ? 'good' : 'warn'),
+        kpi('生产装载率', pct(m.plan ? m.done / m.plan : null), '', '按合法装载完成时间统计', m.plan && m.done / m.plan >= .9 ? 'good' : 'warn'),
+        kpi('当日计划状态已提货', fmt(m.actual), '件', `按当前 TMS 物流状态 · 达成 ${pct(m.priorPlan ? m.actual / m.priorPlan : null)}`, m.priorPlan && m.actual / m.priorPlan >= .9 ? 'good' : 'warn'),
+        kpi('当日提货达成率', pct(m.priorPlan ? m.actual / m.priorPlan : null), '', '已提件数 / 当日计划提货件数', m.priorPlan && m.actual / m.priorPlan >= .9 ? 'good' : 'warn'),
+        kpi('当前待提 / 超时', `${fmt(m.waiting)} / ${fmt(m.overdue)}`, '件', `截至业务日期 ${labelDate(m.cutoff)} · 历史待提 ${fmt(m.historical)} 件`, m.overdue ? 'danger' : 'good'),
+      ].join('');
+      $('volume-kpis').innerHTML = [
+        kpi('当日计划提货方数', fmt(m.planVolume, 2), 'm³', `业务日期计划方数${volumeCoverageHint('计划', m.planRows)}`),
+        kpi('对应生产计划已生产', fmt(m.doneVolume, 2), 'm³', `计划完成 ${pct(m.planVolume ? m.doneVolume / m.planVolume : null)}${volumeCoverageHint('已装载', m.doneRows)}${volumeCoverageHint('计划', m.planRows)}`, m.planVolume && m.doneVolume / m.planVolume >= .9 ? 'good' : 'warn'),
+        kpi('方数装载率', pct(m.planVolume ? m.doneVolume / m.planVolume : null), '', `已装载方数 / 当日计划方数${volumeCoverageHint('已装载', m.doneRows)}${volumeCoverageHint('计划', m.planRows)}`, m.planVolume && m.doneVolume / m.planVolume >= .9 ? 'good' : 'warn'),
+        kpi('当日计划状态已提货方数', fmt(m.actualVolume, 2), 'm³', `按当前 TMS 物流状态${volumeCoverageHint('已提', m.actualRows)}${volumeCoverageHint('计划', m.priorPlanRows)}`, m.priorPlanVolume && m.actualVolume / m.priorPlanVolume >= .9 ? 'good' : 'warn'),
+        kpi('方数提货达成率', pct(m.priorPlanVolume ? m.actualVolume / m.priorPlanVolume : null), '', '已提方数 / 当日计划方数', m.priorPlanVolume && m.actualVolume / m.priorPlanVolume >= .9 ? 'good' : 'warn'),
+        kpi('当前待提 / 超时方数', `${fmt(m.waitingVolume, 2)} / ${fmt(m.overdueVolume, 2)}`, 'm³', `截至业务日期 ${labelDate(m.cutoff)} · 历史待提 ${fmt(m.historicalVolume, 2)} m³${volumeCoverageHint('待提', m.waitingRows)}${volumeCoverageHint('超时', m.overdueRows)}${volumeCoverageHint('历史待提', m.historicalRows)}`, m.overdueVolume ? 'danger' : 'good'),
+      ].join('');
+      $('outbound-summary').innerHTML = [
+        kpi('已出库 SOO', fmt(m.outboundOrders), '单', `${fmt(m.outboundRows.length)} 条匹配明细`),
+        kpi('已出库件数', fmt(m.outboundQty), '件', '汇总所选提货日期内已出库 SOO'),
+        kpi('已出库方数', fmt(m.outboundVolume, 2), 'm³', `按 SP 合单去重${volumeCoverageHint('已出库', m.outboundRows)}`),
+      ].join('');
+      const outboundSource = state.outboundSource || {};
+      $('outbound-source-note').textContent = `判定规则：通过 SOO 关联出库查询表，AQ“实际发货时间”非空即计为已出库。来源：${outboundSource.source_file || '出库查询表'}，${outboundSource.source_updated_at ? `更新时间 ${outboundSource.source_updated_at.slice(0, 16).replace('T', ' ')}` : '更新时间未知'}；当前结果受提货日期、生产日期、区域、仓库、渠道和承运商筛选联动。`;
+      renderOutboundSearch(m);
+    }
+    function renderOverview(m) {
+      renderWarehouseProductionProgress();
+      const actualSet = new Set(m.actualRows); const carrierMap = new Map(); m.priorPlanRows.forEach(r => { const group = carrierMap.get(r.carrier_name) || { name: r.carrier_name, planRows: [], actualRows: [] }; group.planRows.push(r); if (actualSet.has(r)) group.actualRows.push(r); carrierMap.set(r.carrier_name, group); });
+      const carrierVolumes = [...carrierMap.values()].map(g => ({ name: g.name, qty: sumVolume(g.actualRows), plan: sumVolume(g.planRows) })).sort((a, b) => b.plan - a.plan);
+      renderBars('carrier-bars', carrierVolumes, g => `${fmt(g.qty, 2)} / ${fmt(g.plan, 2)} m³`, g => g.plan ? g.qty / g.plan : 0, g => g.plan && g.qty / g.plan < .75 ? 'danger' : g.plan && g.qty / g.plan < .9 ? 'warn' : '');
+      const alerts = [];
+      if (m.overdue) alerts.push(`<div class="alert-item red"><div class="alert-title"><span><span class="status-dot text-red"></span>可提货未提超时</span>${fmt(m.overdue)} 件</div><p>存在已装载且物流状态仍为开放、委托或确认的记录，建议优先联系承运商确认车辆。</p></div>`);
+      if (m.priorPlan && m.actual / m.priorPlan < .9) alerts.push(`<div class="alert-item"><div class="alert-title"><span><span class="status-dot text-yellow"></span>当日计划状态已提达成偏低</span>${pct(m.actual / m.priorPlan)}</div><p>当日计划应提 ${fmt(m.priorPlan)} 件，按当前物流状态已提 ${fmt(m.actual)} 件。当前未配置分时目标。</p></div>`);
+      if (m.historical) alerts.push(`<div class="alert-item"><div class="alert-title"><span><span class="status-dot text-yellow"></span>历史待提承接池</span>${fmt(m.historical)} 件</div><p>生产日期早于业务日期对应生产日且物流状态仍为未提状态，建议进入跨日追踪。</p></div>`);
+      if (!alerts.length) alerts.push(`<div class="alert-item green"><div class="alert-title"><span><span class="status-dot text-green"></span>当前筛选没有触发风险</span>正常</div><p>请结合数据新鲜度与批次质量判断是否需要继续跟进。</p></div>`);
+      $('alert-list').innerHTML = alerts.join('');
+      renderOverviewSearch(m);
+      renderHourlyPickupEfficiency();
+    }
+    function renderWarehouseProductionProgress() {
+      const stageTotals = warehouseProductionProgress.stages.map((_, index) => warehouseProductionProgress.warehouses.reduce((sum, warehouse) => {
+        const [pending, done] = warehouse.values[index];
+        return { pending: sum.pending + pending, done: sum.done + done };
+      }, { pending: 0, done: 0 }));
+      const headers = warehouseProductionProgress.stages.map((stage, index) => {
+        const { pending, done } = stageTotals[index], rate = pending + done ? done / (pending + done) : null;
+        return `<th scope="col"><div class="production-stage-heading"><strong>${esc(stage)}</strong><span>${rate == null ? '—' : `${fmt(rate * 100, 1)}%`}</span></div></th>`;
+      }).join('');
+      const rows = warehouseProductionProgress.warehouses.map(warehouse => `<tr><td>${esc(warehouse.name)}</td>${warehouse.values.map(([pending, done], index) => {
+        const total = pending + done, rate = total ? done / total : null, width = rate == null ? 0 : Math.max(0, Math.min(100, rate * 100));
+        const label = `${warehouse.name}，${warehouseProductionProgress.stages[index]}，已完成 ${fmt(done)}，未完成 ${fmt(pending)}`;
+        return `<td><div class="production-cell" role="progressbar" aria-label="${esc(label)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${rate == null ? 0 : fmt(width, 1)}"><div class="production-cell-main"><strong>${rate == null ? '—' : `${fmt(rate * 100, 1)}%`}</strong><span>${fmt(done)} / ${fmt(total)}</span></div><div class="production-track" aria-hidden="true"><span style="width:${width}%"></span></div></div></td>`;
+      }).join('')}</tr>`).join('');
+      $('warehouse-production-progress').innerHTML = `<div class="warehouse-production-wrap"><table class="warehouse-production-table"><colgroup><col style="width:142px">${warehouseProductionProgress.stages.map(() => '<col style="width:170px">').join('')}</colgroup><thead><tr><th scope="col">实体仓库</th>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
+    function renderOverviewSearch(m) {
+      const soo = state.overviewSearch.soo.trim().toLocaleLowerCase();
+      const sp = state.overviewSearch.sp.trim().toLocaleLowerCase();
+      if (!soo && !sp) { $('overview-search-count').textContent = '请输入 SOO 单号或 SP 单号进行查询'; $('overview-search-results').innerHTML = ''; return; }
+      const rows = m.planRows.filter(row => (!soo || String(row.soo_no || '').toLocaleLowerCase().includes(soo)) && (!sp || String(row.waybill_id || '').toLocaleLowerCase().includes(sp)));
+      const pageSize = state.pageSize, pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+      state.overviewSearch.pageNo = Math.min(state.overviewSearch.pageNo, pageCount);
+      const start = (state.overviewSearch.pageNo - 1) * pageSize;
+      const shown = rows.slice(start, start + pageSize);
+      $('overview-search-count').textContent = `匹配 ${fmt(rows.length)} 条 SOO 明细`;
+      if (!rows.length) { $('overview-search-results').innerHTML = '<div class="empty">当前筛选范围内没有匹配的 SOO 明细</div>'; return; }
+      const body = shown.map(row => `<tr><td>${esc(row.soo_no)}</td><td>${esc(row.waybill_id || '—')}</td><td>${esc(row.warehouse_name)}</td><td>${esc(row.carrier_name)}</td><td>${esc(productionLabel(row))}</td><td>${esc(eventLabel(row.load_completed_at))}</td><td>${esc(row.tms_status || '—')}</td><td>${volumeValue(row) == null ? '—' : `${fmt(volumeValue(row), 2)} m³`}</td></tr>`).join('');
+      $('overview-search-results').innerHTML = `<div class="table-wrap"><table><thead><tr><th>SOO订单号</th><th>SP单号（运单ID）</th><th>仓库</th><th>承运商</th><th>生产日期时间</th><th>装载完成</th><th>TMS物流状态</th><th>方数（AK）</th></tr></thead><tbody>${body}</tbody></table></div><div class="pagination"><span>共 ${fmt(rows.length)} 条 · 第 ${fmt(state.overviewSearch.pageNo)} / ${fmt(pageCount)} 页</span><span><button id="overview-search-prev" ${start === 0 ? 'disabled' : ''}>上一页</button> <button id="overview-search-next" ${start + pageSize >= rows.length ? 'disabled' : ''}>下一页</button></span></div>`;
+      $('overview-search-prev')?.addEventListener('click', () => { state.overviewSearch.pageNo--; renderOverviewSearch(metric()); });
+      $('overview-search-next')?.addEventListener('click', () => { state.overviewSearch.pageNo++; renderOverviewSearch(metric()); });
+    }
+    function outboundMatchedRows(m = metric()) {
+      const soo = state.outboundSearch.soo.trim().toLocaleLowerCase();
+      const sp = state.outboundSearch.sp.trim().toLocaleLowerCase();
+      return m.outboundRows.filter(row => (!soo || String(row.soo_no || '').toLocaleLowerCase().includes(soo)) && (!sp || String(row.waybill_id || '').toLocaleLowerCase().includes(sp)) && selectionIncludes(state.outboundChannel, String(row.channel || '未分配渠道')));
+    }
+    function renderOutboundSearch(m = metric()) {
+      const channels = [...new Set(m.outboundRows.map(row => String(row.channel || '未分配渠道')))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+      renderMultiFilter('outboundChannel', '全部渠道', channels);
+      const searching = Boolean(state.outboundSearch.soo.trim() || state.outboundSearch.sp.trim() || state.outboundChannel !== null);
+      const rows = outboundMatchedRows(m), pageSize = state.pageSize, pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+      state.outboundSearch.pageNo = Math.min(state.outboundSearch.pageNo, pageCount);
+      const start = (state.outboundSearch.pageNo - 1) * pageSize;
+      $('outbound-search-count').textContent = searching ? `匹配 ${fmt(rows.length)} 条已出库 SOO 明细` : `当前筛选范围内共 ${fmt(rows.length)} 条已出库 SOO 明细`;
+      if (!rows.length) { $('outbound-search-results').innerHTML = '<div class="empty">当前筛选范围内没有匹配的已出库 SOO 明细</div>'; return; }
+      const body = rows.slice(start, start + pageSize).map(row => `<tr><td>${esc(row.soo_no)}</td><td>${esc(row.waybill_id || '—')}</td><td>${esc(row.warehouse_name)}</td><td>${esc(row.carrier_name)}</td><td>${esc(row.channel || '—')}</td><td>${esc(productionLabel(row))}</td><td>${esc(eventLabel(actualShipmentAt(row)))}</td><td>${fmt(row.soo_qty)}</td><td>${volumeValue(row) == null ? '—' : `${fmt(volumeValue(row), 2)} m³`}</td></tr>`).join('');
+      $('outbound-search-results').innerHTML = `<div class="table-wrap"><table><thead><tr><th>SOO订单号</th><th>SP单号（运单ID）</th><th>仓库</th><th>承运商</th><th>渠道</th><th>生产日期时间</th><th>实际发货时间（AQ）</th><th>件数</th><th>方数（AK）</th></tr></thead><tbody>${body}</tbody></table></div><div class="pagination"><span>共 ${fmt(rows.length)} 条 · 第 ${fmt(state.outboundSearch.pageNo)} / ${fmt(pageCount)} 页</span><span><button id="outbound-search-prev" ${start === 0 ? 'disabled' : ''}>上一页</button> <button id="outbound-search-next" ${start + pageSize >= rows.length ? 'disabled' : ''}>下一页</button></span></div>`;
+      $('outbound-search-prev')?.addEventListener('click', () => { state.outboundSearch.pageNo--; renderOutboundSearch(metric()); });
+      $('outbound-search-next')?.addEventListener('click', () => { state.outboundSearch.pageNo++; renderOutboundSearch(metric()); });
+    }
+    function renderWarehouse(m) {
+      const groups = new Map(); m.rows.forEach(r => { const g = groups.get(r.warehouse_name) || { name: r.warehouse_name, plan: 0, done: 0, waiting: 0, overdue: 0 }; if (m.planRows.includes(r)) { g.plan += Number(r.soo_qty) || 0; if (r.is_loaded) g.done += Number(r.soo_qty) || 0; } if (m.waitingRows.includes(r)) g.waiting += Number(r.soo_qty) || 0; if (m.overdueRows.includes(r)) g.overdue += Number(r.soo_qty) || 0; groups.set(r.warehouse_name, g); });
+      const allGroups = [...groups.values()];
+      const shownGroups = allGroups.filter(g => state.warehouseTimeout === 'all' || (state.warehouseTimeout === 'overdue' ? g.overdue > 0 : g.overdue === 0));
+      const rows = shownGroups.map(g => `<tr><td>${esc(g.name)}</td><td>${fmt(g.plan)}</td><td>${fmt(g.done)}</td><td>${pct(g.plan ? g.done / g.plan : null)}</td><td>${fmt(g.waiting)}</td><td>${g.overdue ? tag(fmt(g.overdue) + ' 件', 'red') : tag('无', 'green')}</td></tr>`).join('');
+      const overdueWarehouses = allGroups.filter(g => g.overdue > 0).length;
+      $('warehouse-timeout-count').textContent = `当前显示 ${shownGroups.length} / ${allGroups.length} 个仓库；${overdueWarehouses} 个仓库存在超时，共 ${fmt(m.overdue)} 件`;
+      const detailRows = warehouseDetailRows(m);
+      $('warehouse-overdue-download').disabled = !detailRows.length;
+      $('warehouse-overdue-download').title = detailRows.length ? `打开当前条件下的 ${detailRows.length} 条待提明细` : '当前条件下没有待提明细';
+      $('warehouse-detail').innerHTML = `<div class="table-wrap"><table><thead><tr><th>仓库</th><th>生产计划</th><th>已完成</th><th>达成率</th><th>当前待提</th><th>超时</th></tr></thead><tbody>${rows || '<tr><td colspan="6">暂无数据</td></tr>'}</tbody></table></div>`;
+      $('warehouse-summary').innerHTML = `<div class="alert-item"><div class="alert-title"><span>仓库范围</span>${groups.size} 个</div><p>生产计划覆盖：${selectedDateLabel()}。待提与超时按所选日期范围的截止日 ${labelDate(m.cutoff)} 统计。</p></div><div class="alert-item"><div class="alert-title"><span>可提货代理口径</span>装载完成</div><p>未接入独立放行事件时，用合法装载完成时间作近似，并在正式上线前确认。</p></div>`;
+      renderHourlyOutboundEfficiency();
+    }
+    const hourlyOutboundWarehouseAliases = {
+      'BLA-华北廊坊仓':'华北廊坊仓', 'BXA-华北西安仓':'西北西安仓', 'BXA4-华北西安4仓':'西北西安4仓',
+      'DCN-菜鸟新仓-BabyCare华东仓':'华东菜鸟仓', 'DFZ-华东服装仓-Babycare华东仓':'DFZ-华东服装仓-Babycare华东仓',
+      'DGH-华东光合仓':'华东光合仓', 'DHW-恒温仓-光合华东仓':'DHW-恒温仓-光合华东仓',
+      'DJK-金咖仓-Babycare华东仓':'华东金咖仓', 'DJK3-金咖3仓-Babycare华东仓':'华东金咖3仓',
+      'DJK4-金咖4仓-Babycare华东仓':'华东金咖4仓', 'DXZ-华东三方仓':'华东三方仓',
+      'DYX-全国最优先发货仓':'全国最优先发货仓', 'NST-华南沙田仓':'华南沙田仓', 'NST4-华南沙田4仓':'华南沙田4仓',
+      'ZAD-华中三方安迪兰':'华中三方安迪兰', 'ZPX-萍乡仓-BabyCare华中仓':'萍乡仓-BabyCare华中仓',
+      'ZXG-华中孝感综合仓':'华中孝感仓', 'ZXG4-华中孝感4仓':'华中孝感4仓'
+    };
+    function renderHourlyOutboundEfficiency() {
+      const source = state.hourlyOutbound || {};
+      const sourceDate = source.source_date || '';
+      const sourceRows = (source.records || []).filter(row => state.dates.includes(row.date || sourceDate));
+      const selectedWarehouses = state.warehouse === null || !state.warehouse.length ? null : new Set(selectedOptionValues('warehouse'));
+      const filteredRows = sourceRows.filter(row => {
+        const warehouseName = hourlyOutboundWarehouseAliases[row.warehouse] || String(row.warehouse || '').replace(/^[A-Z0-9]+-/, '');
+        return (!selectedWarehouses || selectedWarehouses.has(warehouseName)) && selectionIncludes(state.region, warehouseRegion({ warehouse_name: warehouseName }));
+      }).sort((a, b) => String(hourlyOutboundWarehouseAliases[a.warehouse] || a.warehouse).localeCompare(String(hourlyOutboundWarehouseAliases[b.warehouse] || b.warehouse), 'zh-CN'));
+      const dates = [...new Set(filteredRows.map(row => row.date || sourceDate))].sort();
+      $('hourly-outbound-date').textContent = dates.map(labelDate).join('、') || (sourceDate ? `源数据：${labelDate(sourceDate)}` : '暂无源数据');
+      if (!filteredRows.length) {
+        $('hourly-outbound-efficiency').innerHTML = `<div class="hourly-outbound-empty">${sourceRows.length ? '当前仓库或统仓区域筛选下没有匹配的出库记录' : `所选提货日期暂无每小时出库数据${sourceDate ? `（当前文件日期：${labelDate(sourceDate)}）` : ''}`}</div>`;
+        return;
+      }
+      const hours = [...new Set(filteredRows.flatMap(row => Object.keys(row.hours || {})))].sort();
+      const body = filteredRows.map(row => {
+        const warehouseName = hourlyOutboundWarehouseAliases[row.warehouse] || String(row.warehouse || '').replace(/^[A-Z0-9]+-/, '');
+        const total = Number(row.daily_order_count) || 0;
+        const cells = hours.map(hour => {
+          const count = row.hours?.[hour];
+          if (count == null) return '<td class="efficiency-cell">—</td>';
+          if (!total) return '<td class="efficiency-cell" title="同仓当日总单量为0，无法计算">—</td>';
+          const rate = Number(count) / total;
+          const alpha = Math.min(.28, .04 + rate * .75).toFixed(3);
+          return `<td class="efficiency-cell" style="background:rgba(107,212,206,${alpha})" title="${fmt(count)} / ${fmt(total)} 单">${fmt(rate * 100, 1)}%</td>`;
+        }).join('');
+        return `<tr><td title="${esc(row.warehouse)}">${esc(warehouseName)}</td>${cells}<td class="daily-total">${fmt(total)}</td></tr>`;
+      }).join('');
+      $('hourly-outbound-efficiency').innerHTML = `<div class="hourly-outbound-scroll"><table class="hourly-outbound-table"><thead><tr><th>仓库</th>${hours.map(hour => `<th>${esc(hour)}时</th>`).join('')}<th>当日总单量</th></tr></thead><tbody>${body}</tbody></table></div>`;
+    }
+    function renderPickupMultiSelect(key, label, options, allLabel) {
+      const selected = state.pickupFilters[key] === null ? options : state.pickupFilters[key].filter(value => options.includes(value));
+      if (state.pickupFilters[key] !== null) state.pickupFilters[key] = selected.length === options.length ? null : selected;
+      const isAll = state.pickupFilters[key] === null;
+      const display = isAll ? allLabel : selected.length ? selected.join('、') : '未选择';
+      const items = options.map(value => `<label><input type="checkbox" data-pickup-key="${key}" value="${esc(value)}" ${isAll || selected.includes(value) ? 'checked' : ''}><span>${esc(value)}</span></label>`).join('');
+      return `<div class="pickup-filter-select" data-pickup-select="${key}"><button class="pickup-filter-toggle" type="button" data-pickup-select="${key}" aria-expanded="false" title="${esc(display)}">${esc(display || allLabel)}</button><div class="pickup-filter-menu" data-pickup-menu="${key}"><div class="pickup-filter-actions"><button type="button" data-pickup-action="all" data-pickup-key="${key}">全选</button><button type="button" data-pickup-action="invert" data-pickup-key="${key}">反选</button><button type="button" data-pickup-action="reset" data-pickup-key="${key}">重置筛选</button></div><div class="pickup-filter-items">${items || '<span class="pickup-efficiency-note">暂无选项</span>'}</div></div></div>`;
+    }
+    const pickupTimeOnly = value => readableTimestamp(value).split(' ').at(-1) || '';
+    const pickupObservationPeriodLabel = event => `${pickupTimeOnly(event.interval_start)} – ${pickupTimeOnly(event.interval_end)}`;
+    function renderHourlyPickupEfficiency() {
+      const selected = selectedDateLabel();
+      $('pickup-efficiency-date').textContent = selected;
+      if (!$('pickup-efficiency-filters')) $('pickup-efficiency-snapshot-status').insertAdjacentHTML('afterend', `<div class="pickup-efficiency-toolbar" id="pickup-efficiency-filters"><div class="field"><label>实际观察时段（可多选）</label><div id="pickup-observation-period-filter"></div></div><div class="field"><label>仓库（可多选）</label><div id="pickup-warehouse-filter"></div></div><div class="field"><label>物流 / 承运商（可多选）</label><div id="pickup-carrier-filter"></div></div><button class="button-quiet" id="pickup-filter-reset" type="button">重置筛选</button><button class="button-primary" id="pickup-detail-open" type="button">具体明细窗口</button></div>`);
+      const snapshotInfo = state.pickupSnapshotInfo;
+      $('pickup-efficiency-snapshot-status').textContent = !snapshotInfo || !snapshotInfo.snapshot_count
+        ? '尚未保存小时快照；首次成功数据源将建立基线。'
+        : snapshotInfo.snapshot_count < 2
+          ? `已保存 ${fmt(snapshotInfo.snapshot_count)} 份小时快照；至少需要相邻两份快照才能识别提货变化。`
+          : `已保存 ${fmt(snapshotInfo.snapshot_count)} 份小时快照；最新快照 ${eventLabel(snapshotInfo.snapshot_hours?.at(-1))}，按相邻快照计算。`;
+      if (state.pickupTransitionError) {
+        $('pickup-efficiency-summary').innerHTML = '';
+        state.pickupDetailRows = [];
+        $('pickup-efficiency-table').innerHTML = `<div class="pickup-efficiency-empty">提货快照数据暂不可用：${esc(state.pickupTransitionError)}</div>`;
+        return;
+      }
+      const spOf = row => row.waybill_id ? `SP:${String(row.waybill_id).trim().toUpperCase()}` : `SOO:${row.domain_code || ''}:${row.soo_no || row.row_no || ''}`;
+      const firstHourBySp = new Map();
+      (state.pickupTransitions || []).forEach(event => {
+        if (event.is_self_pickup) return;
+        let businessDates = [];
+        try { businessDates = JSON.parse(event.business_dates || '[]'); } catch {}
+        const hour = String(event.hour_slot || event.interval_end || '').slice(0, 13);
+        businessDates.forEach(day => {
+          const key = `${day}\u0000${spOf(event)}`, previous = firstHourBySp.get(key);
+          if (!previous || hour < previous) firstHourBySp.set(key, hour);
+        });
+      });
+      const baseEvents = (state.pickupTransitions || []).filter(event => {
+        let businessDates = [];
+        try { businessDates = JSON.parse(event.business_dates || '[]'); } catch {}
+        return !event.is_self_pickup && state.dates.some(day => businessDates.includes(day))
+          && (state.productionDates === null || state.productionDates.includes(event.production_date))
+          && selectionIncludes(state.region, warehouseRegion({ warehouse_name: event.warehouse_name }))
+          && selectionIncludes(state.warehouse, event.warehouse_name)
+          && selectionIncludes(state.carrier, event.carrier_name)
+          && selectionIncludes(state.channel, event.channel);
+      }).sort((a, b) => String(a.interval_end).localeCompare(String(b.interval_end)) || String(a.soo_no).localeCompare(String(b.soo_no)));
+      const hourKey = event => String(event.hour_slot || event.interval_end || '').slice(0, 13);
+      const observationPeriodOptions = [...new Set(baseEvents.filter(event => event.interval_start && event.interval_end).map(pickupObservationPeriodLabel))].sort((a, b) => a.localeCompare(b));
+      const warehouseOptions = [...new Set(baseEvents.map(event => event.warehouse_name || '未映射仓库'))].sort((a,b) => a.localeCompare(b,'zh-CN'));
+      const carrierOptions = [...new Set(baseEvents.map(event => event.carrier_name || '未分配承运商'))].sort((a,b) => a.localeCompare(b,'zh-CN'));
+      $('pickup-observation-period-filter').innerHTML = renderPickupMultiSelect('observationPeriods', '实际观察时段', observationPeriodOptions, '全部实际观察时段');
+      $('pickup-warehouse-filter').innerHTML = renderPickupMultiSelect('warehouse', '仓库', warehouseOptions, '全部仓库');
+      $('pickup-carrier-filter').innerHTML = renderPickupMultiSelect('carrier', '承运商', carrierOptions, '全部物流 / 承运商');
+      const events = baseEvents.filter(event => {
+        const warehouse = event.warehouse_name || '未映射仓库', carrier = event.carrier_name || '未分配承运商';
+        const observationPeriod = pickupObservationPeriodLabel(event);
+        return (state.pickupFilters.warehouse === null || state.pickupFilters.warehouse.includes(warehouse))
+          && (state.pickupFilters.carrier === null || state.pickupFilters.carrier.includes(carrier))
+          && (state.pickupFilters.observationPeriods === null || state.pickupFilters.observationPeriods.includes(observationPeriod));
+      });
+      const eventDays = events.flatMap(event => {
+        let businessDates = [];
+        try { businessDates = JSON.parse(event.business_dates || '[]'); } catch {}
+        return state.dates.filter(day => businessDates.includes(day)).map(day => ({ event, day }));
+      }).filter(({ event, day }) => {
+        const key = `${day}\u0000${spOf(event)}`;
+        const hour = String(event.hour_slot || event.interval_end || '').slice(0, 13);
+        return firstHourBySp.get(key) === hour;
+      }).sort((a, b) => String(a.event.interval_end).localeCompare(String(b.event.interval_end)) || a.day.localeCompare(b.day));
+      const dimensions = (warehouse, carrier) => `${warehouse || '未映射仓库'}\u0000${carrier || '未分配承运商'}`;
+      const visibleEventDays = eventDays;
+      const planRows = visibleRows().filter(rowMatchesSelectedProductionDates);
+      const plans = new Map(), carrierPlans = new Map();
+      state.dates.forEach(day => {
+        const grouped = new Map(), byCarrier = new Map();
+        planRows.filter(row => rowBelongsToBusinessDate(row, day)).forEach(row => {
+          const key = `${day}\u0000${dimensions(row.warehouse_name, row.carrier_name)}`;
+          const plan = grouped.get(key) || { rows: [] };
+          plan.rows.push(row);
+          grouped.set(key, plan);
+          const carrierKey = `${day}\u0000${row.carrier_name || '未分配承运商'}`;
+          const carrierPlan = byCarrier.get(carrierKey) || { rows: [] };
+          carrierPlan.rows.push(row);
+          byCarrier.set(carrierKey, carrierPlan);
+        });
+        grouped.forEach((plan, key) => plans.set(key, { volume: sumVolume(plan.rows) }));
+        byCarrier.forEach((plan, key) => carrierPlans.set(key, { volume: sumVolume(plan.rows) }));
+      });
+      const volumeBySp = new Map();
+      eventDays.forEach(({ event, day }) => {
+        const key = `${day}\u0000${spOf(event)}`;
+        const volume = event.gross_cbm == null || event.gross_cbm === '' ? null : Number(event.gross_cbm);
+        if (!volumeBySp.has(key) && volume != null && Number.isFinite(volume)) volumeBySp.set(key, volume);
+      });
+      const detailCountedSp = new Set();
+      state.pickupDetailRows = visibleEventDays.map(({ event, day }) => {
+        const spKey = `${day}\u0000${spOf(event)}`, hasVolume = volumeBySp.has(spKey), includeVolume = hasVolume && !detailCountedSp.has(spKey);
+        detailCountedSp.add(spKey);
+        return { day, event, volume: includeVolume ? volumeBySp.get(spKey) : null, volumeDuplicate: hasVolume && !includeVolume };
+      });
+      const groups = new Map(), countedSp = new Set();
+      visibleEventDays.forEach(({ event, day }) => {
+        const sp = `${day}\u0000${spOf(event)}`;
+        if (countedSp.has(sp)) return;
+        countedSp.add(sp);
+        const end = String(event.interval_end || ''), start = String(event.interval_start || '');
+        const hour = String(event.hour_slot || end).slice(0, 13);
+        const warehouse = event.warehouse_name || '未映射仓库', carrier = event.carrier_name || '未分配承运商';
+        const key = `${day}\u0000${hour}\u0000${dimensions(warehouse, carrier)}`;
+        const group = groups.get(key) || { day, hour, warehouse, carrier, volume: 0, volumeSpCount: 0, start, end };
+        if (start && (!group.start || start < group.start)) group.start = start;
+        if (end && end > group.end) group.end = end;
+        if (volumeBySp.has(sp)) { group.volume += volumeBySp.get(sp); group.volumeSpCount += 1; }
+        groups.set(key, group);
+      });
+      const chronological = [...groups.values()].sort((a, b) => a.day.localeCompare(b.day) || a.hour.localeCompare(b.hour) || a.warehouse.localeCompare(b.warehouse, 'zh-CN') || a.carrier.localeCompare(b.carrier, 'zh-CN'));
+      const carrierHourVolumes = new Map();
+      chronological.forEach(row => {
+        const key = `${row.day}\u0000${row.hour}\u0000${row.carrier}`;
+        carrierHourVolumes.set(key, (carrierHourVolumes.get(key) || 0) + row.volume);
+      });
+      const carrierCumulative = new Map(), carrierMetrics = new Map();
+      [...carrierHourVolumes.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([hourKey, volume]) => {
+        const [day, hour, carrier] = hourKey.split('\u0000');
+        const carrierKey = `${day}\u0000${carrier}`;
+        const total = (carrierCumulative.get(carrierKey) || 0) + volume;
+        carrierCumulative.set(carrierKey, total);
+        const plan = carrierPlans.get(carrierKey) || { volume: 0 };
+        const rate = plan.volume ? total / plan.volume : null;
+        carrierMetrics.set(hourKey, { planVolume: plan.volume, cumulativeVolume: rate == null ? null : plan.volume * rate, rate });
+      });
+      chronological.forEach(row => {
+        const planKey = `${row.day}\u0000${dimensions(row.warehouse, row.carrier)}`;
+        row.plan = plans.get(planKey) || { volume: 0 };
+        row.hourlyVolumeShare = row.plan.volume ? row.volume / row.plan.volume : null;
+        const carrierMetric = carrierMetrics.get(`${row.day}\u0000${row.hour}\u0000${row.carrier}`);
+        row.dailyRequiredVolume = carrierMetric?.planVolume || 0;
+        row.cumulativeVolume = carrierMetric?.cumulativeVolume ?? null;
+        row.cumulativeVolumeRate = carrierMetric?.rate ?? null;
+      });
+      const rows = chronological.sort((a, b) => b.hour.localeCompare(a.hour) || b.day.localeCompare(a.day) || a.warehouse.localeCompare(b.warehouse, 'zh-CN') || a.carrier.localeCompare(b.carrier, 'zh-CN'));
+      const totalVolume = rows.reduce((sum, row) => sum + row.volume, 0);
+      const latestCarrierRows = new Map();
+      rows.forEach(row => {
+        const key = `${row.day}\u0000${row.carrier}`;
+        const current = latestCarrierRows.get(key);
+        if (!current || row.hour > current.hour) latestCarrierRows.set(key, row);
+      });
+      const remainingRows = [...latestCarrierRows.values()].filter(row => row.dailyRequiredVolume > 0 && row.cumulativeVolume != null);
+      const remainingVolume = remainingRows.reduce((sum, row) => sum + Math.max(0, row.dailyRequiredVolume - row.cumulativeVolume), 0);
+      const remainingLabel = remainingRows.length ? `${fmt(remainingVolume, 2)} m³` : '暂无有效计划方数';
+      $('pickup-efficiency-summary').innerHTML = `<div class="pickup-efficiency-stat"><span>新增提货方数 · 按 SP 合单去重；缺失方数不按 0 补</span><strong>${fmt(totalVolume, 2)} m³</strong></div><div class="pickup-efficiency-stat"><span>剩余方数未提 · 按承运商计划方数减累计方数</span><strong>${remainingLabel}</strong></div>`;
+      if (!rows.length) {
+        $('pickup-efficiency-table').innerHTML = `<div class="pickup-efficiency-empty">${state.dates.length ? `当前筛选条件下（提货日期：${esc(selected)}）没有新识别的提货状态变化` : '请先选择提货日期'}</div>`;
+        return;
+      }
+      const body = rows.map(row => {
+        const slot = `${row.day.replaceAll('-', '.')} ${row.hour.slice(11, 13)}:00`;
+        const interval = pickupObservationPeriodLabel({ interval_start: row.start, interval_end: row.end });
+        const volumeLabel = row.volumeSpCount ? `${fmt(row.volume, 2)} m³` : 'AK方数缺失或SP已在其他小时计入';
+        const dailyVolumeLabel = row.dailyRequiredVolume ? fmt(row.dailyRequiredVolume, 2) : '—';
+        const cumulativeVolumeLabel = row.cumulativeVolume == null ? '—' : fmt(row.cumulativeVolume, 2);
+        const volumeShare = row.hourlyVolumeShare == null ? '无有效计划方数' : pct(row.hourlyVolumeShare);
+        const cumulativeVolumeRate = row.cumulativeVolumeRate == null ? '无有效计划方数' : pct(row.cumulativeVolumeRate);
+        return `<tr><td>${esc(slot)}</td><td title="${esc(row.warehouse)}">${esc(row.warehouse)}</td><td title="${esc(row.carrier)}">${esc(row.carrier)}</td><td>${volumeLabel}</td><td>${dailyVolumeLabel} m³</td><td>${volumeShare}</td><td>${cumulativeVolumeLabel} m³</td><td>${cumulativeVolumeRate}</td><td>${esc(interval)}</td></tr>`;
+      }).join('');
+      $('pickup-efficiency-table').innerHTML = `<div class="pickup-efficiency-scroll"><table class="pickup-efficiency-table"><thead><tr><th>业务日期 / 小时</th><th>仓库</th><th>物流 / 承运商</th><th>每小时提货方数</th><th>当日需提方数</th><th>方数占比</th><th>累计方数</th><th>累计方数达成率</th><th>实际观察区间</th></tr></thead><tbody>${body}</tbody></table></div>`;
+    }
+    function renderPickupDetailDialog() {
+      const rows = state.pickupDetailRows || [];
+      const observationPeriods = state.pickupFilters.observationPeriods;
+      const periodName = observationPeriods === null ? '全部实际观察时段' : observationPeriods.join('、') || '未选择实际观察时段';
+      $('pickup-detail-count').textContent = `共 ${fmt(rows.length)} 条状态变化 · ${state.dates.map(labelDate).join('、') || '未选择提货日期'} · ${periodName}`;
+      const body = rows.map(({ day, event, volume, volumeDuplicate }) => `<tr><td>${esc(labelDate(day))} ${esc(String(event.hour_slot || event.interval_end || '').slice(11, 13))}:00</td><td>${esc(event.soo_no || '—')}</td><td>${esc(event.waybill_id || '—')}</td><td>${esc(event.warehouse_name || '未映射仓库')}</td><td>${esc(event.carrier_name || '未分配承运商')}</td><td>${esc(event.channel || '—')}</td><td>${esc(event.production_date || '—')}</td><td>${esc(event.previous_status || '—')} → ${esc(event.current_status || '—')}</td><td>${volume == null ? (volumeDuplicate ? 'SP合单已计入' : '方数缺失') : `${fmt(volume, 2)} m³`}</td><td>${esc(pickupObservationPeriodLabel(event))}</td></tr>`).join('');
+      $('pickup-detail-table').innerHTML = rows.length ? `<div class="table-wrap"><table class="pickup-detail-table"><thead><tr><th>提货日期 / 小时</th><th>SOO订单号</th><th>SP运单ID</th><th>仓库</th><th>物流 / 承运商</th><th>渠道</th><th>生产日期</th><th>物流状态变化</th><th>提货方数（SP去重）</th><th>实际观察区间</th></tr></thead><tbody>${body}</tbody></table></div>` : '<div class="empty">当前筛选条件下没有提货状态变化明细</div>';
+      $('pickup-detail-download').disabled = !rows.length;
+    }
+    function downloadPickupDetailCsv() {
+      const headers = ['提货日期','提货小时','SOO订单号','SP运单ID','仓库','物流/承运商','渠道','生产日期','变更前物流状态','变更后物流状态','方数（m³，SP去重）','观察开始','观察结束'];
+      const rows = (state.pickupDetailRows || []).map(({ day, event, volume, volumeDuplicate }) => [day, readableHourSlot(event.hour_slot || event.interval_end), event.soo_no || '', event.waybill_id || '', event.warehouse_name || '', event.carrier_name || '', event.channel || '', event.production_date || '', event.previous_status || '', event.current_status || '', volume ?? (volumeDuplicate ? 'SP合单已计入' : ''), readableTimestamp(event.interval_start), readableTimestamp(event.interval_end)]);
+      const safeCell = value => { let text = String(value ?? ''); if (/^[\s]*[=+\-@]/.test(text)) text = `'${text}`; return `"${text.replaceAll('"', '""')}"`; };
+      const csv = [headers, ...rows].map(row => row.map(safeCell).join(',')).join('\n');
+      const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }), url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = `每小时提货效率明细-${state.dates.join('_') || '未选日期'}.csv`; a.click(); URL.revokeObjectURL(url);
+    }
+    function ensurePickupDetailDialog() {
+      if ($('pickup-detail-dialog')) return;
+      document.body.insertAdjacentHTML('beforeend', `<dialog id="pickup-detail-dialog" aria-labelledby="pickup-detail-title"><div class="dialog-card"><div class="section-head"><div><h3 id="pickup-detail-title">每小时提货效率具体明细</h3><span id="pickup-detail-count"></span></div><button class="button-quiet" id="pickup-detail-close" type="button">关闭</button></div><p class="note">仅显示相邻 TMS 快照识别出的物流状态变化；按当前提货日期、全局筛选及本模块实际观察时段、仓库、承运商条件生成。方数按 SP 合单去重，重复 SOO 不重复累计；不展示件数。</p><div id="pickup-detail-table"></div><div class="dialog-actions"><button class="button-primary" id="pickup-detail-download" type="button">下载 CSV 明细</button></div></div></dialog>`);
+    }
+    document.addEventListener('change', event => {
+      const checkbox = event.target.closest('input[data-pickup-key]');
+      if (!checkbox) return;
+      const key = checkbox.dataset.pickupKey;
+      const options = [...checkbox.closest('.pickup-filter-items').querySelectorAll('input[data-pickup-key]')];
+      const selected = options.filter(input => input.checked).map(input => input.value);
+      state.pickupFilters[key] = selected.length === options.length ? null : selected;
+      render();
+    });
+    document.addEventListener('click', event => {
+      if (event.target.closest('#reset-filters')) return;
+      const toggle = event.target.closest('.pickup-filter-toggle');
+      if (toggle && toggle.dataset.pickupSelect) {
+        const menu = toggle.parentElement.querySelector('.pickup-filter-menu');
+        const open = !menu.classList.contains('open');
+        document.querySelectorAll('.pickup-filter-menu').forEach(item => item.classList.remove('open'));
+        menu.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', String(open));
+      } else if (event.target.closest('[data-pickup-action]')) {
+        const button = event.target.closest('[data-pickup-action]'), key = button.dataset.pickupKey;
+        const options = [...button.closest('.pickup-filter-menu').querySelectorAll('input[data-pickup-key]')].map(input => input.value);
+        const current = state.pickupFilters[key] === null ? options : state.pickupFilters[key];
+        if (button.dataset.pickupAction === 'all' || button.dataset.pickupAction === 'reset') state.pickupFilters[key] = null;
+        else state.pickupFilters[key] = current.length === options.length ? [] : options.filter(value => !current.includes(value));
+        render();
+      } else if (event.target.closest('#pickup-filter-reset')) {
+        state.pickupFilters = { observationPeriods: null, warehouse: null, carrier: null };
+        render();
+      } else if (event.target.closest('#pickup-detail-open')) {
+        ensurePickupDetailDialog(); renderPickupDetailDialog(); $('pickup-detail-dialog').showModal();
+      } else if (event.target.closest('#pickup-detail-close')) $('pickup-detail-dialog').close();
+      else if (event.target.closest('#pickup-detail-download')) downloadPickupDetailCsv();
+      else if (event.target === $('pickup-detail-dialog')) $('pickup-detail-dialog').close();
+      else if (!event.target.closest('#pickup-efficiency-filters')) {
+        document.querySelectorAll('.pickup-filter-menu').forEach(menu => menu.classList.remove('open'));
+        document.querySelectorAll('.pickup-filter-toggle').forEach(button => button.setAttribute('aria-expanded', 'false'));
+      }
+    });
+    function warehouseDetailRows(m) {
+      if (state.warehouseTimeout === 'overdue') return m.overdueRows;
+      if (state.warehouseTimeout === 'clear') {
+        const timeoutWarehouses = new Set(m.overdueRows.map(row => row.warehouse_name));
+        return m.waitingRows.filter(row => !timeoutWarehouses.has(row.warehouse_name));
+      }
+      return m.waitingRows;
+    }
+    function warehouseDetailCondition() {
+      return state.warehouseTimeout === 'overdue' ? '存在超时' : state.warehouseTimeout === 'clear' ? '无超时仓库' : '全部仓库';
+    }
+    function renderWarehouseOverdueDialog(m) {
+      const rows = warehouseDetailRows(m), overdueSet = new Set(m.overdueRows);
+      $('warehouse-overdue-title').textContent = `仓库具体明细 · ${warehouseDetailCondition()}`;
+      $('warehouse-overdue-count').textContent = `共 ${fmt(rows.length)} 条待提 SOO · 截止日期 ${labelDate(m.cutoff)}`;
+      const body = rows.map(r => `<tr><td>${esc(r.soo_no)}</td><td>${esc(r.warehouse_name)}</td><td>${esc(r.carrier_name)}</td><td>${esc(productionLabel(r))}</td><td>${esc(eventLabel(r.load_completed_at))}</td><td>${esc(eventLabel(r.latest_pickup_at))}</td><td>${overdueSet.has(r) ? tag('超时', 'red') : tag('未超时', 'green')}</td><td>${esc(r.tms_status || '—')}</td><td>${fmt(r.soo_qty)}</td></tr>`).join('');
+      $('warehouse-overdue-table').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>SOO订单号</th><th>仓库</th><th>承运商</th><th>生产日期时间</th><th>装载完成时间</th><th>最晚提货时间</th><th>超时状态</th><th>物流状态</th><th>件数</th></tr></thead><tbody>${body}</tbody></table></div>` : '<div class="empty">当前筛选条件下没有待提明细</div>';
+      $('warehouse-overdue-csv').disabled = !rows.length;
+    }
+    function downloadWarehouseOverdueCsv(m) {
+      const overdueSet = new Set(m.overdueRows);
+      const headers = ['SOO订单号','仓库','承运商','渠道','生产日期时间','装载完成时间','最晚提货时间','超时状态','物流状态','件数'];
+      const rows = warehouseDetailRows(m).map(r => [r.soo_no, r.warehouse_name, r.carrier_name, r.channel, r.production_at || r.production_date, r.load_completed_at || '', r.latest_pickup_at || '', overdueSet.has(r) ? '超时' : '未超时', r.tms_status || '', r.soo_qty ?? '']);
+      const safeCell = value => { let text = String(value ?? ''); if (/^[\s]*[=+\-@]/.test(text)) text = `'${text}`; return `"${text.replaceAll('"', '""')}"`; };
+      const csv = [headers, ...rows].map(row => row.map(safeCell).join(',')).join('\n');
+      const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `仓库明细-${warehouseDetailCondition()}-${state.dates.join('_') || '未选日期'}.csv`; a.click(); URL.revokeObjectURL(url);
+    }
+    function carrierMonitorGroups(m) {
+      const map = new Map(); m.priorPlanRows.forEach(r => { const carrier = r.carrier_name || '未分配承运商'; const warehouse = r.warehouse_name || '未分配仓库'; const status = isPickedUp(r) ? 'picked' : 'pending'; const key = JSON.stringify([carrier, warehouse, status]); const g = map.get(key) || { name: carrier, warehouse, status, planRows: [], actualRows: [] }; g.planRows.push(r); if (status === 'picked') g.actualRows.push(r); map.set(key, g); });
+      const groups = [...map.values()].map(g => ({ ...g, plan: sum(g.planRows, 'soo_qty'), actual: sum(g.actualRows, 'soo_qty'), planVolume: sumVolume(g.planRows), actualVolume: sumVolume(g.actualRows) }));
+      return { groups };
+    }
+    function renderCarrier(m) {
+      const { groups } = carrierMonitorGroups(m);
+      groups.sort((a,b) => (a.status === b.status ? a.name.localeCompare(b.name, 'zh-CN') || a.warehouse.localeCompare(b.warehouse, 'zh-CN') : a.status === 'pending' ? -1 : 1));
+      const filtered = groups.filter(group => state.carrierPickupStatus === 'all' || group.status === state.carrierPickupStatus);
+      const rows = filtered.map(g => { const picked = g.status === 'picked'; const statusLabel = picked ? '已提货' : '未提货'; const statusClass = picked ? 'picked' : 'pending'; return `<tr><td>${esc(g.name)}</td><td>${esc(g.warehouse)}</td><td>${fmt(g.planVolume, 2)} m³</td><td>${fmt(g.actualVolume, 2)} m³</td><td>${pct(g.planVolume ? g.actualVolume / g.planVolume : null)}</td><td><span class="pickup-status-badge ${statusClass}">${statusLabel}</span></td><td>—</td><td>—</td></tr>`; }).join('');
+      $('carrier-risk-count').textContent = `当前显示 ${filtered.length} / ${groups.length} 组承运商-仓库-提货状态组合`;
+      $('carrier-detail-export').disabled = !filtered.length;
+      $('carrier-detail').innerHTML = `<p class="carrier-time-note">件数指标列已隐藏；状态按 TMS 物流状态判断。方数按每个 SP 只计一次；提货开始/结束时间口径待定，暂不计算。</p><div class="table-wrap"><table><thead><tr><th>承运商</th><th>对应仓库</th><th>计划方数</th><th>当前状态已提方数</th><th>方数达成率</th><th>物流提货状态</th><th>提货开始时间</th><th>提货结束时间</th></tr></thead><tbody>${rows || '<tr><td colspan="8">暂无对应生产日计划</td></tr>'}</tbody></table></div>`;
+    }
+    function downloadCarrierDetailCsv() {
+      const m = metric();
+      const { groups } = carrierMonitorGroups(m);
+      const selectedGroups = groups.filter(group => state.carrierPickupStatus === 'all' || group.status === state.carrierPickupStatus);
+      const groupByRow = new Map();
+      selectedGroups.forEach(group => group.planRows.forEach(row => groupByRow.set(row, group)));
+      const headers = ['提货日期','承运商','仓库','SOO订单号','SP单号（运单ID）','渠道','生产日期时间','物流状态','物流提货状态','组合计划件数','组合已提件数','组合件数达成率','组合计划方数（m³）','组合已提方数（m³）','组合方数达成率','SOO件数','方数（AK，行级原值m³）','装载完成时间','实际提货时间'];
+      const rows = m.priorPlanRows.filter(row => groupByRow.has(row)).map(row => {
+        const group = groupByRow.get(row);
+        const pickupDates = state.dates.filter(day => rowBelongsToBusinessDate(row, day)).map(labelDate).join('、');
+        return [pickupDates, group.name, group.warehouse, row.soo_no, row.waybill_id || '', row.channel || '', row.production_at || row.production_date || '', row.tms_status || '', isPickedUp(row) ? '已提货' : '未提货', group.plan, group.actual, group.plan ? `${(group.actual / group.plan * 100).toFixed(1)}%` : '—', group.planVolume.toFixed(2), group.actualVolume.toFixed(2), group.planVolume ? `${(group.actualVolume / group.planVolume * 100).toFixed(1)}%` : '—', row.soo_qty ?? '', volumeValue(row) ?? '', row.load_completed_at || '', row.actual_pickup_at || ''];
+      });
+      const safeCell = value => { let text = String(value ?? ''); if (/^[\s]*[=+\-@]/.test(text)) text = `'${text}`; return `"${text.replaceAll('"', '""')}"`; };
+      const csv = [headers, ...rows].map(row => row.map(safeCell).join(',')).join('\n');
+      const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob), anchor = document.createElement('a');
+      anchor.href = url; anchor.download = `承运商具体明细-${state.dates.join('_') || '未选日期'}-${state.carrierPickupStatus}.csv`; anchor.click(); URL.revokeObjectURL(url);
+    }
+    function filteredOrderRows() { return searchRows().filter(row => state.orderStatus === 'all' || rowStatusText(row) === state.orderStatus); }
+    function renderOrders() {
+      const baseRows = searchRows();
+      const statuses = [...new Set(baseRows.map(rowStatusText))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+      if (state.orderStatus !== 'all' && !statuses.includes(state.orderStatus)) state.orderStatus = 'all';
+      $('order-status-filter').innerHTML = '<option value="all">全部状态</option>' + statuses.map(status => `<option value="${esc(status)}">${esc(status)}</option>`).join('');
+      $('order-status-filter').value = state.orderStatus;
+      const rows = filteredOrderRows();
+      $('orders-count').textContent = `当前显示 ${fmt(rows.length)} / ${fmt(baseRows.length)} 条订单记录`;
+      renderTable(rows, 'orders-table');
+    }
+    function renderOrderStatusDialog() {
+      const rows = filteredOrderRows();
+      $('order-status-count').textContent = `共 ${fmt(rows.length)} 条 · 状态条件：${state.orderStatus === 'all' ? '全部状态' : state.orderStatus}`;
+      const body = rows.map(row => `<tr><td>${esc(row.soo_no)}</td><td>${esc(row.waybill_id || '—')}</td><td>${esc(row.warehouse_name)}</td><td>${esc(row.carrier_name)}</td><td>${esc(row.channel || '—')}</td><td>${esc(productionLabel(row))}</td><td>${rowStatus(row)}</td><td>${esc(row.tms_status || '—')}</td><td>${esc(eventLabel(row.load_completed_at))}</td><td>${esc(eventLabel(row.actual_pickup_at))}</td><td>${fmt(row.soo_qty)}</td><td>${volumeValue(row) == null ? '—' : `${new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(volumeValue(row))} m³`}</td></tr>`).join('');
+      $('order-status-table').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>SOO订单号</th><th>SP单号（运单ID）</th><th>仓库</th><th>承运商</th><th>渠道</th><th>生产日期时间</th><th>监控状态</th><th>TMS物流状态</th><th>装载完成时间</th><th>实际提货时间</th><th>件数</th><th>方数（AK）</th></tr></thead><tbody>${body}</tbody></table></div>` : '<div class="empty">当前筛选范围内没有订单记录</div>';
+      $('order-status-download').disabled = !rows.length;
+    }
+    function downloadOrderStatusCsv() {
+      const headers = ['SOO订单号','发货订单Id','运单ID（SP）','仓库','承运商','渠道','生产日期时间','监控状态','TMS物流状态','装载完成时间','实际提货时间','件数','方数（AK，m³）','数据质量标记'];
+      const rows = filteredOrderRows().map(row => [row.soo_no, row.shipping_order_id, row.waybill_id, row.warehouse_name, row.carrier_name, row.channel, row.production_at || row.production_date || '', rowStatusText(row), row.tms_status || '', row.load_completed_at || '', row.actual_pickup_at || '', row.soo_qty ?? '', row.gross_cbm ?? '', (row.quality_flags || []).join('、')]);
+      const safeCell = value => { let text = String(value ?? ''); if (/^[\s]*[=+\-@]/.test(text)) text = `'${text}`; return `"${text.replaceAll('"', '""')}"`; };
+      const csv = [headers, ...rows].map(row => row.map(safeCell).join(',')).join('\n');
+      const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }), url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = `订单状态明细-${state.dates.join('_') || '未选日期'}-${state.orderStatus === 'all' ? '全部状态' : state.orderStatus}.csv`; a.click(); URL.revokeObjectURL(url);
+    }
+    function renderOutboundDetailDialog() {
+      const rows = outboundMatchedRows(metric());
+      $('outbound-detail-count').textContent = `共 ${fmt(rows.length)} 条 · 提货日期：${state.dates.map(labelDate).join('、') || '未选择'}`;
+      const body = rows.map(row => `<tr><td>${esc(row.soo_no)}</td><td>${esc(row.waybill_id || '—')}</td><td>${esc(row.warehouse_name)}</td><td>${esc(row.carrier_name)}</td><td>${esc(row.channel || '—')}</td><td>${esc(productionLabel(row))}</td><td>${esc(eventLabel(actualShipmentAt(row)))}</td><td>${fmt(row.soo_qty)}</td><td>${volumeValue(row) == null ? '—' : `${fmt(volumeValue(row), 2)} m³`}</td></tr>`).join('');
+      $('outbound-detail-table').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>SOO订单号</th><th>SP单号（运单ID）</th><th>仓库</th><th>承运商</th><th>渠道</th><th>生产日期时间</th><th>实际发货时间（AQ）</th><th>件数</th><th>方数（AK）</th></tr></thead><tbody>${body}</tbody></table></div>` : '<div class="empty">当前筛选条件下没有已出库明细</div>';
+      $('outbound-detail-download').disabled = !rows.length;
+    }
+    function downloadOutboundDetailCsv() {
+      const headers = ['SOO订单号','运单ID（SP）','仓库','承运商','渠道','生产日期时间','实际发货时间（AQ）','件数','方数（AK，m³）'];
+      const rows = outboundMatchedRows(metric()).map(row => [row.soo_no, row.waybill_id || '', row.warehouse_name, row.carrier_name, row.channel || '', row.production_at || row.production_date || '', actualShipmentAt(row), row.soo_qty ?? '', volumeValue(row) ?? '']);
+      const safeCell = value => { let text = String(value ?? ''); if (/^[\s]*[=+\-@]/.test(text)) text = `'${text}`; return `"${text.replaceAll('"', '""')}"`; };
+      const csv = [headers, ...rows].map(row => row.map(safeCell).join(',')).join('\n');
+      const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }), url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = `当日已出库明细-${state.dates.join('_') || '未选日期'}.csv`; a.click(); URL.revokeObjectURL(url);
+    }
+    function chainRows() {
+      const q = state.query.trim().toLowerCase();
+      return visibleRows().filter(rowMatchesSelectedProductionDates).filter(rowMatchesSelectedBusinessDates).filter(row => !q || [row.soo_no, row.shipping_order_id, row.waybill_id, row.carrier_name, row.warehouse_name].some(value => String(value || '').toLowerCase().includes(q)));
+    }
+    function chainTimelineRows(rows = chainRows()) {
+      const filters = state.chainFilters, soo = filters.soo.trim().toLocaleLowerCase();
+      return rows.filter(row => (!soo || String(row.soo_no || '').toLocaleLowerCase().includes(soo))
+        && (!filters.warehouse || row.warehouse_name === filters.warehouse)
+        && (!filters.carrier || row.carrier_name === filters.carrier)
+        && (!filters.tmsDate || dateOnly(row.tms_created_at) === filters.tmsDate)
+        && (!filters.loadDate || dateOnly(row.load_completed_at) === filters.loadDate));
+    }
+    function renderChainFilters(rows) {
+      const warehouseSelect = $('chain-warehouse-filter'), carrierSelect = $('chain-carrier-filter');
+      const warehouseValues = [...new Set(rows.map(row => row.warehouse_name).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+      if (state.chainFilters.warehouse && !warehouseValues.includes(state.chainFilters.warehouse)) state.chainFilters.warehouse = '';
+      const carrierRows = state.chainFilters.warehouse ? rows.filter(row => row.warehouse_name === state.chainFilters.warehouse) : rows;
+      const carrierValues = [...new Set(carrierRows.map(row => row.carrier_name).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+      if (state.chainFilters.carrier && !carrierValues.includes(state.chainFilters.carrier)) state.chainFilters.carrier = '';
+      warehouseSelect.innerHTML = `<option value="">全部仓库</option>${warehouseValues.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join('')}`;
+      carrierSelect.innerHTML = `<option value="">全部承运商</option>${carrierValues.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join('')}`;
+      warehouseSelect.value = state.chainFilters.warehouse;
+      carrierSelect.value = state.chainFilters.carrier;
+    }
+    function chainMissingItems(row) {
+      return [['装载完成时间', row.load_completed_at], ['围栏进入时间', row.park_entered_at], ['围栏离开时间', row.park_exited_at]].filter(([, value]) => !value).map(([label]) => label);
+    }
+    function chainMissingRows() { return chainTimelineRows().filter(row => chainMissingItems(row).length); }
+    function chainIcon(kind) {
+      const paths = {
+        order: '<path d="M7 3.75h7l4 4V20a.75.75 0 0 1-.75.75h-10.5A.75.75 0 0 1 6 20V4.5a.75.75 0 0 1 .75-.75Z"/><path d="M14 4v4h4M9 12h6M9 16h6"/>',
+        load: '<path d="m3.5 8 8.5-4.5L20.5 8 12 12.5 3.5 8Z"/><path d="M3.5 8v8L12 20.5l8.5-4.5V8M12 12.5v8M7.5 6l8.7 4.7"/>',
+        enter: '<path d="M12 21s7-4.2 7-11a7 7 0 1 0-14 0c0 6.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/><path d="M12 2v3"/>',
+        exit: '<path d="M12 21s7-4.2 7-11a7 7 0 1 0-14 0c0 6.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.3"/><path d="M9 2.8 7.5 5M15 2.8 16.5 5"/>',
+        route: '<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8 18h2a4 4 0 0 0 4-4v-4a4 4 0 0 1 4-4"/><path d="m15.5 6 2.5-2.5L20.5 6"/>',
+      };
+      return `<span class="chain-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24">${paths[kind]}</svg></span>`;
+    }
+    function renderChain() {
+      const rows = chainRows();
+      const timelineRows = chainTimelineRows(rows);
+      renderChainFilters(rows);
+      const stages = [
+        { label: 'TMS 建单', field: 'tms_created_at', icon: 'order' },
+        { label: '仓库装载完成', field: 'load_completed_at', previous: 'tms_created_at', icon: 'load' },
+        { label: '物流进入园区', field: 'park_entered_at', previous: 'load_completed_at', icon: 'enter' },
+        { label: '物流离开园区', field: 'park_exited_at', previous: 'park_entered_at', icon: 'exit' },
+      ];
+      const groupedRows = [...spGroups(rows).values()], total = groupedRows.length;
+      const cards = stages.map(stage => {
+        const completed = groupedRows.filter(group => group.every(row => row[stage.field]));
+        const durations = stage.previous ? groupedRows.filter(group => group.every(row => durationMinutes(row[stage.previous], row[stage.field]) != null)).map(group => durationMinutes(group[0][stage.previous], group[0][stage.field])) : [];
+        const average = durations.length ? durations.reduce((sum, value) => sum + value, 0) / durations.length : null;
+        return `<div class="kpi chain-kpi"><div class="chain-kpi-head">${chainIcon(stage.icon)}<div class="kpi-label">${stage.label}</div></div><div class="kpi-value">${pct(total ? completed.length / total : null)}</div><div class="kpi-meta">已完成 ${fmt(completed.length)} / ${fmt(total)} 个SP合单${stage.previous ? ` · 平均 ${durationLabel(average)} · 中位 ${durationLabel(median(durations))}（${fmt(durations.length)} 个SP样本）` : ''}</div></div>`;
+      });
+      const endToEnd = groupedRows.filter(group => group.every(row => durationMinutes(row.tms_created_at, row.park_exited_at) != null)).map(group => durationMinutes(group[0].tms_created_at, group[0].park_exited_at));
+      const endAverage = endToEnd.length ? endToEnd.reduce((sum, value) => sum + value, 0) / endToEnd.length : null;
+      cards.push(`<div class="kpi chain-kpi"><div class="chain-kpi-head">${chainIcon('route')}<div class="kpi-label">建单至离园</div></div><div class="kpi-value">${durationLabel(endAverage)}</div><div class="kpi-meta">中位 ${durationLabel(median(endToEnd))} · 完整链路 ${fmt(endToEnd.length)} / ${fmt(total)} 个SP合单</div></div>`);
+      $('chain-overview').innerHTML = cards.join('');
+      const invalidPairs = groupedRows.reduce((count, group) => count + [['tms_created_at','load_completed_at'], ['load_completed_at','park_entered_at'], ['park_entered_at','park_exited_at']].filter(([a,b]) => group.some(row => row[a] && row[b] && durationMinutes(row[a], row[b]) == null)).length, 0);
+      $('chain-warning').innerHTML = invalidPairs ? `<div class="alert-item red"><div class="alert-title"><span>发现时间顺序异常</span>${fmt(invalidPairs)} 段</div><p>结束时间早于开始时间或时间无法解析。异常阶段已从平均用时中排除，请核对 TMS 原始记录。</p></div>` : `<div class="alert-item green"><div class="alert-title"><span>时间顺序检查</span>未发现倒序时间</div><p>用时仅统计起止时间均存在且顺序有效的记录；空时间表示该链路节点尚未回传。</p></div>`;
+      $('chain-count').textContent = `共 ${fmt(total)} 个SP合单 · 时间线筛选后 ${fmt(timelineRows.length)} / ${fmt(rows.length)} 条SOO · ${selectedDateLabel()}`;
+      $('chain-missing-open').textContent = `链路时间缺失明细（${fmt(chainMissingRows().length)}）`;
+      const body = timelineRows.slice((state.pageNo - 1) * state.pageSize, state.pageNo * state.pageSize).map(row => {
+        const d1 = durationMinutes(row.tms_created_at, row.load_completed_at), d2 = durationMinutes(row.load_completed_at, row.park_entered_at), d3 = durationMinutes(row.park_entered_at, row.park_exited_at), all = durationMinutes(row.tms_created_at, row.park_exited_at);
+        const cellDuration = (value, start, end) => start && end && value == null ? tag('时间异常', 'red') : durationLabel(value);
+        return `<tr><td>${esc(row.soo_no)}</td><td>${esc(row.warehouse_name)}</td><td>${esc(row.carrier_name)}</td><td>${esc(eventLabel(row.tms_created_at))}</td><td>${esc(eventLabel(row.load_completed_at))}</td><td>${cellDuration(d1,row.tms_created_at,row.load_completed_at)}</td><td>${esc(eventLabel(row.park_entered_at))}</td><td>${cellDuration(d2,row.load_completed_at,row.park_entered_at)}</td><td>${esc(eventLabel(row.park_exited_at))}</td><td>${cellDuration(d3,row.park_entered_at,row.park_exited_at)}</td><td>${cellDuration(all,row.tms_created_at,row.park_exited_at)}</td></tr>`;
+      }).join('');
+      const start = (state.pageNo - 1) * state.pageSize;
+      $('chain-table').innerHTML = timelineRows.length ? `<div class="table-wrap"><table><thead><tr><th>SOO订单号</th><th>仓库</th><th>承运商</th><th>TMS建单</th><th>装载完成</th><th>建单→装载</th><th>进入园区</th><th>装载→进园</th><th>离开园区</th><th>进园→离园</th><th>建单→离园</th></tr></thead><tbody>${body}</tbody></table></div><div class="pagination"><span>共 ${fmt(timelineRows.length)} 条 · 第 ${fmt(Math.floor(start / state.pageSize) + 1)} / ${fmt(Math.max(1, Math.ceil(timelineRows.length / state.pageSize)))} 页</span><span><button id="chain-prev" ${start === 0 ? 'disabled' : ''}>上一页</button> <button id="chain-next" ${start + state.pageSize >= timelineRows.length ? 'disabled' : ''}>下一页</button></span></div>` : '<div class="empty">当前筛选条件下没有匹配的订单链路记录</div>';
+      $('chain-prev')?.addEventListener('click', () => { state.pageNo--; renderChain(); }); $('chain-next')?.addEventListener('click', () => { state.pageNo++; renderChain(); });
+    }
+    function renderChainMissingDialog() {
+      const rows = chainMissingRows();
+      $('chain-missing-count').textContent = `当前筛选：${selectedDateLabel()} · 共 ${fmt(rows.length)} 条`;
+      const body = rows.map(row => `<tr><td>${esc(row.soo_no)}</td><td>${esc(row.warehouse_name)}</td><td>${esc(row.carrier_name)}</td><td>${esc(productionLabel(row))}</td><td>${esc(eventLabel(row.load_completed_at))}</td><td>${esc(eventLabel(row.park_entered_at))}</td><td>${esc(eventLabel(row.park_exited_at))}</td><td>${esc(chainMissingItems(row).join('、'))}</td></tr>`).join('');
+      $('chain-missing-table').innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>SOO订单号</th><th>仓库</th><th>承运商</th><th>生产日期时间</th><th>装载完成时间</th><th>围栏进入时间</th><th>围栏离开时间</th><th>缺失环节</th></tr></thead><tbody>${body}</tbody></table></div>` : '<div class="empty">当前筛选范围内没有链路时间缺失记录</div>';
+      $('chain-missing-download').disabled = !rows.length;
+    }
+    function downloadChainMissingCsv() {
+      const headers = ['SOO订单号','仓库','承运商','生产日期时间','装载完成时间','围栏进入时间','围栏离开时间','缺失环节'];
+      const rows = chainMissingRows().map(row => [row.soo_no, row.warehouse_name, row.carrier_name, row.production_at || row.production_date || '', row.load_completed_at || '', row.park_entered_at || '', row.park_exited_at || '', chainMissingItems(row).join('、')]);
+      const safeCell = value => { let text = String(value ?? ''); if (/^[\s]*[=+\-@]/.test(text)) text = `'${text}`; return `"${text.replaceAll('"', '""')}"`; };
+      const csv = [headers, ...rows].map(row => row.map(safeCell).join(',')).join('\n');
+      const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }), url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = `soo-chain-missing-${state.dates.join('_')}.csv`; a.click(); URL.revokeObjectURL(url);
+    }
+    function renderQuality() { const q = state.data.quality; const selfPickupCount = (state.data.records || []).filter(row => !isPresentationRecord(row)).length; const cards = [['表体行数', q.total_body_rows, ''], ['有效 SOO', q.valid_soo_count, ''], ['排除空白行', q.blank_soo_rows_excluded, ''], ['重复主键行', q.duplicate_key_rows, q.duplicate_key_rows ? 'issue' : ''], ['非法时间值', q.invalid_datetime_values, q.invalid_datetime_values ? 'issue' : ''], ['链路时间值异常', q.invalid_link_datetime_values || 0, q.invalid_link_datetime_values ? 'issue' : ''], ['件数异常', q.invalid_qty_values + q.negative_qty_values, q.invalid_qty_values + q.negative_qty_values ? 'issue' : ''], ['状态/提货时间不一致', q.state_conflicts, q.state_conflicts ? 'issue' : ''], ['质量闸门', q.invalid_qty_values || q.negative_qty_values || q.invalid_datetime_values > Math.max(5, q.valid_soo_count / 10) ? '需复核' : '已发布', q.invalid_qty_values || q.negative_qty_values ? 'issue' : '']]; $('quality-grid').innerHTML = cards.map(item => `<div class="quality-card ${item[2]}"><span>${item[0]}</span><strong>${typeof item[1] === 'number' ? fmt(item[1]) : item[1]}</strong></div>`).join(''); $('quality-note').textContent = `当前 SOO 中状态与提货时间不一致 ${fmt(q.state_conflicts)} 条；提货完成仍以 TMS 物流状态为准。重复主键 ${fmt(q.duplicate_key_rows)} 条。链路事件字段异常单独统计，不计入原有时间质量闸门。方数以第二组六项指标卡展示：每个SP只计一个方数主值；件数仍按 SOO 求和。原始数据审计保留自提记录，本次共排除 ${fmt(selfPickupCount)} 条，自提记录不参与运营指标、筛选、明细和报表。`; $('quality-rules').innerHTML = ['SOO订单号为空的行不进入订单事实表', '同一文件重复上传按 SHA256 幂等处理', '业务日期=生产日期+1天；生产日当天00:00至12:00（含12:00）另计入当天', '时间及件数通过合法性校验', '相同运单ID（SP）按一个合单统计；取SP内出现次数最多的AK方数，频次并列取源表首值，件数按所属SOO求和', '名称或字段内容包含“自提”的记录不纳入任何运营展示、筛选、明细、下载与BI报表；原始采集保留供审计', '开放、委托、确认视为未提；其余非空物流状态视为已提', '提货时间与物流状态不一致时只标记质量问题，不覆盖状态判定', '数据源异常时保留上一成功发布版本'].map((text, i) => `<div class="alert-item ${i === 0 ? 'green' : ''}"><div class="alert-title"><span>${text}</span>${i === 0 ? '已执行' : '规则'}</div></div>`).join(''); }
+    const routeWarehouseAliases = { '华北廊坊仓':'廊坊仓', '华东菜鸟仓':'菜鸟二期', '华东光合仓':'食品仓-光合', 'DHW-恒温仓-光合华东仓':'食品仓', '华东金咖仓':'金咖仓', '华南沙田仓-线下':'华南沙田仓', '华中孝感仓':'孝感仓', '西北西安仓':'西安仓', 'DFZ-华东服装仓-Babycare华东仓':'金咖服装仓' };
+    function render() { const m = metric(); renderKpis(m); renderOverview(m); renderWarehouse(m); renderCarrier(m); renderOrders(); renderChain(); renderQuality(); document.querySelectorAll('.page').forEach(page => page.classList.toggle('active', page.id === `page-${state.page}`)); document.querySelectorAll('.nav-entry').forEach(entry => entry.classList.toggle('active', entry.dataset.navEntry === state.page)); document.querySelectorAll('.nav-button').forEach(btn => btn.classList.toggle('active', btn.dataset.page === state.page)); syncNavigation(); $('page-title').textContent = ({ overview: '总览驾驶舱', warehouse: '仓库监控', carrier: '承运商监控', orders: '订单与异常', chain: '链路监控', quality: '数据质量' })[state.page]; persistFilterState(); }
+    function recordsForDate() { return presentationRows().filter(rowMatchesSelectedBusinessDates).filter(rowMatchesSelectedProductionDates); }
+    function renderMultiFilter(key, allLabel, values) {
+      values = [...new Set(values)].sort((a, b) => String(a).localeCompare(String(b), 'zh-CN'));
+      filterValues[key] = values;
+      if (state[key] !== null) {
+        const previous = state[key];
+        const valid = previous.filter(value => values.includes(value));
+        state[key] = values.length && valid.length === values.length && values.every(value => valid.includes(value)) ? null : valid.length || previous.length === 0 ? valid : null;
+      }
+      const query = String(state.optionSearch[key] || '').trim().toLocaleLowerCase();
+      const matches = values.filter(value => String(value).toLocaleLowerCase().includes(query));
+      const selected = new Set(state[key] === null ? values : state[key]);
+      const id = `${key}-items`;
+      const summary = selectionSummary(key, allLabel);
+      $(`${key}-toggle`).textContent = summary;
+      $(`${key}-toggle`).title = summary;
+      $(id).innerHTML = matches.length ? matches.map(value => `<label><input type="checkbox" data-filter-key="${key}" value="${esc(value)}" ${selected.has(value) ? 'checked' : ''} />${esc(value)}</label>`).join('') : '<div class="multi-empty">当前条件下没有可选项</div>';
+      $(`${key}-toggle`).setAttribute('aria-label', `${allLabel}，${summary}`);
+    }
+    function fillFilters() {
+      const dates = availableBusinessDates();
+      state.dates = state.dates.filter(date => dates.includes(date));
+      if (!state.dates.length && dates.length && !state.dateSelectionCleared) state.dates = [defaultBusinessDate(dates)];
+      const allSelected = dates.length > 0 && dates.every(date => state.dates.includes(date));
+      $('date-options').innerHTML = `<div class="date-actions"><button id="date-select-all" type="button" aria-pressed="${allSelected}">全选日期</button><button id="date-invert" type="button">反选日期</button><button id="date-reset" type="button">重置筛选</button></div>` + dates.map(date => `<label><input type="checkbox" value="${esc(date)}" ${state.dates.includes(date) ? 'checked' : ''} />${esc(labelDate(date))}</label>`).join('');
+      $('date-toggle').textContent = selectedDateLabel();
+      const productionDateCandidates = [...new Set(presentationRows().filter(rowMatchesSelectedBusinessDates).map(row => row.production_date).filter(Boolean))].sort();
+      if (state.productionDates !== null) {
+        const previousProductionDates = state.productionDates;
+        state.productionDates = previousProductionDates.filter(date => productionDateCandidates.includes(date));
+        if (previousProductionDates.length && !state.productionDates.length) state.productionDates = null;
+        if (productionDateCandidates.length && state.productionDates.length === productionDateCandidates.length && productionDateCandidates.every(date => state.productionDates.includes(date))) state.productionDates = null;
+      }
+      const allProductionDatesSelected = state.productionDates === null || productionDateCandidates.every(date => state.productionDates.includes(date));
+      const selectedProductionDates = allProductionDatesSelected ? productionDateCandidates : state.productionDates;
+      const productionDateLabel = selectedProductionDates.length ? selectedProductionDates.map(labelDate).join('、') : productionDateCandidates.length ? '未选择生产日期' : '暂无生产日期';
+      $('production-date-toggle').textContent = productionDateLabel;
+      $('production-date-toggle').title = productionDateLabel;
+      $('production-date-options').innerHTML = `<div class="date-actions"><button id="production-date-select-all" type="button" aria-pressed="${allProductionDatesSelected}">全选日期</button><button id="production-date-invert" type="button">反选日期</button><button id="production-date-reset" type="button">重置筛选</button></div>` + productionDateCandidates.map(date => `<label><input type="checkbox" value="${esc(date)}" ${state.productionDates === null || state.productionDates.includes(date) ? 'checked' : ''} />${esc(labelDate(date))}</label>`).join('');
+      const dayRows = recordsForDate();
+      const regions = [...new Set(Object.values(state.warehouseRegions))];
+      if (dayRows.some(r => warehouseRegion(r) === '未映射仓库')) regions.push('未映射仓库');
+      regions.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+      renderMultiFilter('region', '全部统仓', regions);
+      const regionRows = dayRows.filter(r => selectionIncludes(state.region, warehouseRegion(r)));
+      renderMultiFilter('warehouse', '全部仓库', unique(regionRows, 'warehouse_name'));
+      const warehouseRows = regionRows.filter(r => selectionIncludes(state.warehouse, r.warehouse_name));
+      let carriers = unique(warehouseRows, 'carrier_name');
+      const hasWarehouseSelection = state.warehouse !== null && state.warehouse.length > 0;
+      if (hasWarehouseSelection) {
+        const allowed = new Set();
+        selectedOptionValues('warehouse').forEach(warehouse => {
+          const sourceWarehouse = routeWarehouseAliases[warehouse];
+          (state.warehouseCarriers[sourceWarehouse] || []).forEach(carrier => allowed.add(carrier));
+        });
+        const configured = allowed;
+        carriers = carriers.filter(carrier => configured.has(carrier));
+      }
+      renderMultiFilter('carrier', '全部承运商', carriers);
+      const carrierRows = warehouseRows.filter(r => selectionIncludes(state.carrier, r.carrier_name));
+      renderMultiFilter('channel', '全部渠道', unique(carrierRows, 'channel'));
+      const selectedWarehouses = selectedOptionValues('warehouse');
+      const sourceWarehouse = selectedWarehouses.length === 1 ? routeWarehouseAliases[selectedWarehouses[0]] : '';
+      const routeHint = !hasWarehouseSelection
+        ? '选择仓库后，承运商将按线路表关系收窄；日期与渠道选项也会随当前条件联动。'
+        : selectedWarehouses.length > 1
+          ? '承运商选项按已选仓库的线路关系合并，并与当前日期数据取交集。'
+        : sourceWarehouse && (state.warehouseCarriers[sourceWarehouse] || []).length
+          ? `承运商已按线路表中的「${sourceWarehouse}」始发线路筛选。`
+          : '线路表中暂无该仓的明确映射，暂不提供线路限定的承运商选项。';
+      $('filter-hint').textContent = `${routeHint} 统仓区域筛选按仓-区域映射表联动，未收录仓库归入“未映射仓库”。多选框清空后按不限处理，下游选项仍可用。`;
+      const source = state.data.source || {};
+      const sync = source.last_success_sync_at || '';
+      const age = sync ? Date.now() - new Date(sync).getTime() : Infinity;
+      document.querySelector('.sync-chip strong').textContent = age > 60 * 60 * 1000 ? '数据延迟' : '数据可用';
+      $('sync-time').textContent = sync ? new Date(sync).toLocaleString('zh-CN', {timeZone:'Asia/Shanghai',hour12:false}) : '尚未同步';
+      $('source-time').textContent = source.last_source_updated_at ? source.last_source_updated_at.slice(0, 16).replace('T', ' ') : '未知';
+      const businessDates = availableBusinessDates();
+      $('date-range').textContent = businessDates.length ? `${labelDate(businessDates[0])} 至 ${labelDate(businessDates[businessDates.length - 1])}` : '暂无数据';
+      $('batch-label').textContent = source.published_batch_id ? `TMS 批次 #${source.published_batch_id}` : '尚无成功批次';
+      $('sidebar-note').textContent = source.published_batch_id ? `当前展示本机数据库中的 ${source.file_name}。最近成功导入：${$('sync-time').textContent}；报表筛选范围：${source.report_scope || '未记录'}。这不是实时 TMS 连接。` : '尚无成功导入；请在数据质量页面上传 TMS SOO 报表。';
+    }
+    function resetFilters() {
+      const dates = availableBusinessDates();
+      state.dates = dates.length ? [defaultBusinessDate(dates)] : [];
+      state.dateSelectionCleared = false;
+      state.productionDates = null;
+      state.region = []; state.warehouse = []; state.carrier = []; state.channel = [];
+      state.carrierPickupStatus = 'all'; $('carrier-pickup-status-filter').value = 'all';
+      state.warehouseTimeout = 'all'; $('warehouse-timeout-filter').value = 'all';
+      state.orderStatus = 'all'; $('order-status-filter').value = 'all';
+      state.optionSearch = { region: '', warehouse: '', carrier: '', channel: '' };
+      ['region-search', 'warehouse-search', 'carrier-search', 'channel-search'].forEach(id => { $(id).value = ''; });
+      state.pageNo = 1;
+      fillFilters();
+      render();
+    }
+    function downloadCsv() { const headers = ['SOO订单号','发货订单Id','运单ID','仓库','承运商','渠道','生产日期时间','TMS建单时间','装载完成时间','围栏进入时间','围栏离开时间','建单至装载分钟','装载至进园分钟','进园至离园分钟','建单至离园分钟','实际提货时间','件数','毛体积','目的地省份','目的地城市','状态']; const rows = searchRows().map(r => [r.soo_no, r.shipping_order_id, r.waybill_id, r.warehouse_name, r.carrier_name, r.channel, r.production_at || r.production_date, r.tms_created_at || '', r.load_completed_at || '', r.park_entered_at || '', r.park_exited_at || '', durationMinutes(r.tms_created_at, r.load_completed_at) ?? '', durationMinutes(r.load_completed_at, r.park_entered_at) ?? '', durationMinutes(r.park_entered_at, r.park_exited_at) ?? '', durationMinutes(r.tms_created_at, r.park_exited_at) ?? '', r.actual_pickup_at || '', r.soo_qty ?? '', r.gross_cbm ?? '', r.dest_province || '', r.dest_city || '', r.tms_status]); const safeCell = value => { let text = String(value ?? ''); if (/^[\s]*[=+\-@]/.test(text)) text = `'${text}`; return `"${text.replaceAll('"', '""')}"`; }; const csv = [headers, ...rows].map(row => row.map(safeCell).join(',')).join('\n'); const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `soo-${state.dates.join('_')}-filtered.csv`; a.click(); URL.revokeObjectURL(url); }
+    $('date-toggle').addEventListener('click', () => { const open = $('date-options').classList.toggle('open'); $('date-toggle').setAttribute('aria-expanded', String(open)); });
+    $('production-date-toggle').addEventListener('click', () => {
+      $('date-options').classList.remove('open'); $('date-toggle').setAttribute('aria-expanded', 'false');
+      const open = $('production-date-options').classList.toggle('open'); $('production-date-toggle').setAttribute('aria-expanded', String(open));
+    });
+    $('date-options').addEventListener('click', event => {
+      const dates = availableBusinessDates();
+      if (event.target.closest('#date-reset')) { state.dates = []; state.dateSelectionCleared = true; }
+      else if (event.target.closest('#date-select-all')) { state.dates = dates.slice(); state.dateSelectionCleared = false; }
+      else if (event.target.closest('#date-invert')) { const selected = new Set(state.dates); const inverse = dates.filter(date => !selected.has(date)); state.dates = inverse; state.dateSelectionCleared = !inverse.length; }
+      else return;
+      state.pageNo = 1; fillFilters(); render();
+    });
+    $('date-options').addEventListener('change', event => { if (event.target.matches('input[type="checkbox"]')) { const selected = [...$('date-options').querySelectorAll('input:checked')].map(input => input.value); state.dates = selected.sort(); state.dateSelectionCleared = !state.dates.length; state.pageNo = 1; fillFilters(); render(); } });
+    $('production-date-options').addEventListener('click', event => {
+      const dates = [...new Set(presentationRows().filter(rowMatchesSelectedBusinessDates).map(row => row.production_date).filter(Boolean))].sort();
+      if (event.target.closest('#production-date-reset')) state.productionDates = [];
+      else if (event.target.closest('#production-date-select-all')) state.productionDates = null;
+      else if (event.target.closest('#production-date-invert')) {
+        const selected = new Set(state.productionDates === null ? dates : state.productionDates);
+        const inverse = dates.filter(date => !selected.has(date));
+        state.productionDates = inverse.length ? inverse : dates.slice(-1);
+      } else return;
+      state.pageNo = 1; fillFilters(); render();
+    });
+    $('production-date-options').addEventListener('change', event => {
+      if (!event.target.matches('input[type="checkbox"]')) return;
+      const dates = [...new Set(presentationRows().filter(rowMatchesSelectedBusinessDates).map(row => row.production_date).filter(Boolean))].sort();
+      const selected = new Set(state.productionDates === null ? dates : state.productionDates);
+      event.target.checked ? selected.add(event.target.value) : selected.delete(event.target.value);
+      state.productionDates = selected.size === dates.length && dates.every(date => selected.has(date)) ? null : [...selected];
+      state.pageNo = 1; fillFilters(); render();
+    });
+    document.addEventListener('click', event => {
+      if (event.target.closest('#reset-filters')) return;
+      if (!event.target.closest('.date-multiselect')) { $('date-options').classList.remove('open'); $('date-toggle').setAttribute('aria-expanded', 'false'); }
+      if (!event.target.closest('.production-date-multiselect')) { $('production-date-options').classList.remove('open'); $('production-date-toggle').setAttribute('aria-expanded', 'false'); }
+      const toggle = event.target.closest('.multi-toggle');
+      if (toggle) {
+        document.querySelectorAll('.multi-options').forEach(menu => { if (menu.id !== `${toggle.id.replace('-toggle', '-options')}`) menu.classList.remove('open'); });
+        document.querySelectorAll('.multi-toggle').forEach(button => { if (button !== toggle) button.setAttribute('aria-expanded', 'false'); });
+        const menu = $(`${toggle.id.replace('-toggle', '-options')}`);
+        const open = menu.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+        return;
+      }
+      const action = event.target.closest('.multi-actions button[data-action]');
+      if (action) {
+        const key = action.closest('.multi-options').id.replace('-options', '');
+        const values = filterValues[key];
+        if (action.dataset.action === 'reset') {
+          state[key] = [];
+          state.optionSearch[key] = '';
+          $(`${key}-search`).value = '';
+          if (key === 'outboundChannel') state.outboundSearch.pageNo = 1;
+          state.pageNo = 1;
+          fillFilters();
+          render();
+          return;
+        }
+        const query = String(state.optionSearch[key] || '').trim().toLocaleLowerCase();
+        const visible = values.filter(value => String(value).toLocaleLowerCase().includes(query));
+        const selected = new Set(state[key] === null ? values : state[key]);
+        if (action.dataset.action === 'all') visible.forEach(value => selected.add(value));
+        else visible.forEach(value => selected.has(value) ? selected.delete(value) : selected.add(value));
+        state[key] = selected.size === values.length && values.every(value => selected.has(value)) ? null : [...selected];
+        if (key === 'outboundChannel') state.outboundSearch.pageNo = 1;
+        state.pageNo = 1;
+        fillFilters();
+        render();
+        return;
+      }
+      if (event.target.closest('#reset-filters')) return;
+      if (!event.target.closest('.multi-select')) {
+        document.querySelectorAll('.multi-options').forEach(menu => menu.classList.remove('open'));
+        document.querySelectorAll('.multi-toggle').forEach(button => button.setAttribute('aria-expanded', 'false'));
+      }
+    });
+    document.addEventListener('change', event => {
+      const checkbox = event.target.closest('.multi-items input[data-filter-key]');
+      if (!checkbox) return;
+      const key = checkbox.dataset.filterKey, values = filterValues[key], selected = new Set(selectedOptionValues(key));
+      checkbox.checked ? selected.add(checkbox.value) : selected.delete(checkbox.value);
+      state[key] = selected.size === values.length && values.every(value => selected.has(value)) ? null : [...selected];
+      if (key === 'outboundChannel') state.outboundSearch.pageNo = 1;
+      state.pageNo = 1;
+      fillFilters();
+      render();
+    });
+    document.addEventListener('input', event => {
+      const input = event.target.closest('.multi-search');
+      if (!input) return;
+      const key = input.id.replace('-search', '');
+      state.optionSearch[key] = input.value;
+      fillFilters();
+    });
+    const navModules = {
+      overview: [
+        ['订单计划指标', '#kpis'], ['方数体积指标', '#volume-kpis'], ['订单明细查询', '#overview-search-results'], ['当日已出库', '#outbound-summary'], ['已出库订单查询', '#outbound-search-results'],
+        ['仓库生产进度', '#warehouse-production-panel'], ['仓库每小时出库效率', '#hourly-outbound-efficiency'], ['每小时提货效率', '#pickup-efficiency-table'],
+        ['承运商达成', '#carrier-bars'], ['风险播报', '#alert-list'],
+      ],
+      warehouse: [['仓库超时', '#warehouse-detail'], ['仓库口径', '#warehouse-summary']],
+      carrier: [['承运商提货状态', '#carrier-detail'], ['承运商风险说明', '#page-carrier .panel:last-child']],
+      orders: [['订单与异常明细', '#orders-table']],
+      chain: [['链路阶段概览', '#chain-overview'], ['订单链路时间线', '#chain-table']],
+      quality: [['本批次处理结果', '#quality-note'], ['人工导入 TMS 报表', '#import-file'], ['质量规则', '#quality-rules']],
+    };
+    let expandedNavPage = 'overview', activeNavTarget = '';
+    function syncNavigation() {
+      document.querySelectorAll('.nav-entry').forEach(entry => {
+        const expanded = entry.dataset.navEntry === expandedNavPage;
+        const toggle = entry.querySelector('.nav-expand'), submenu = entry.querySelector('.nav-submenu');
+        toggle.setAttribute('aria-expanded', String(expanded));
+        submenu.hidden = !expanded;
+        toggle.setAttribute('aria-label', `${expanded ? '收起' : '展开'}${entry.querySelector('.nav-button').textContent.trim()}子模块`);
+      });
+      document.querySelectorAll('.nav-subitem').forEach(item => {
+        const active = item.dataset.navTarget === activeNavTarget;
+        item.classList.toggle('active', active);
+        if (active) item.setAttribute('aria-current', 'location'); else item.removeAttribute('aria-current');
+      });
+    }
+    Object.entries(navModules).forEach(([page, modules]) => {
+      const submenu = document.querySelector(`[data-nav-submenu="${page}"]`);
+      submenu.innerHTML = modules.map(([label, selector], index) => {
+        const source = document.querySelector(selector);
+        let target = ['hourly-outbound-efficiency', 'pickup-efficiency-table'].includes(source?.id) ? source : source?.closest('.section') || source?.closest('.panel') || source;
+        if (!target) return '';
+        if (!target.id) target.id = `nav-${page}-${index}`;
+        target.classList.add('nav-target');
+        return `<button class="nav-subitem" type="button" data-page="${page}" data-nav-target="${target.id}">${label}</button>`;
+      }).join('');
+    });
+    document.querySelectorAll('.nav-button').forEach(btn => btn.addEventListener('click', () => {
+      state.page = btn.dataset.page; state.pageNo = 1; expandedNavPage = state.page; activeNavTarget = ''; render();
+    }));
+    document.querySelectorAll('.nav-expand').forEach(btn => btn.addEventListener('click', () => {
+      const page = btn.closest('.nav-entry').dataset.navEntry;
+      expandedNavPage = expandedNavPage === page ? '' : page;
+      syncNavigation();
+    }));
+    document.querySelectorAll('.nav-subitem').forEach(btn => btn.addEventListener('click', () => {
+      state.page = btn.dataset.page; state.pageNo = 1; expandedNavPage = state.page; activeNavTarget = btn.dataset.navTarget; render();
+      document.getElementById(activeNavTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+    $('reset-filters').addEventListener('click', resetFilters);
+    const backToTopButton = $('back-to-top');
+    const syncBackToTopVisibility = () => { backToTopButton.hidden = window.scrollY < 240; };
+    window.addEventListener('scroll', syncBackToTopVisibility, { passive: true });
+    backToTopButton.addEventListener('click', () => {
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) window.scrollTo(0, 0);
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    syncBackToTopVisibility();
+    $('carrier-pickup-status-filter').addEventListener('change', event => { state.carrierPickupStatus = event.target.value; renderCarrier(metric()); });
+    $('carrier-detail-export').addEventListener('click', downloadCarrierDetailCsv);
+    $('warehouse-timeout-filter').addEventListener('change', event => { state.warehouseTimeout = event.target.value; renderWarehouse(metric()); });
+    $('warehouse-overdue-download').addEventListener('click', () => { renderWarehouseOverdueDialog(metric()); $('warehouse-overdue-dialog').showModal(); });
+    $('warehouse-overdue-close').addEventListener('click', () => $('warehouse-overdue-dialog').close());
+    $('warehouse-overdue-csv').addEventListener('click', () => downloadWarehouseOverdueCsv(metric()));
+    $('warehouse-overdue-dialog').addEventListener('click', event => { if (event.target === $('warehouse-overdue-dialog')) $('warehouse-overdue-dialog').close(); });
+    $('search-filter').addEventListener('input', event => { state.query = event.target.value; state.pageNo = 1; renderOrders(); }); $('export-btn').addEventListener('click', downloadCsv);
+    $('overview-soo-search').addEventListener('input', event => { state.overviewSearch.soo = event.target.value; state.overviewSearch.pageNo = 1; renderOverviewSearch(metric()); });
+    $('overview-sp-search').addEventListener('input', event => { state.overviewSearch.sp = event.target.value; state.overviewSearch.pageNo = 1; renderOverviewSearch(metric()); });
+    $('outbound-soo-search').addEventListener('input', event => { state.outboundSearch.soo = event.target.value; state.outboundSearch.pageNo = 1; renderOutboundSearch(metric()); });
+    $('outbound-sp-search').addEventListener('input', event => { state.outboundSearch.sp = event.target.value; state.outboundSearch.pageNo = 1; renderOutboundSearch(metric()); });
+    $('outbound-detail-open').addEventListener('click', () => { renderOutboundDetailDialog(); $('outbound-detail-dialog').showModal(); });
+    $('outbound-detail-close').addEventListener('click', () => $('outbound-detail-dialog').close());
+    $('outbound-detail-download').addEventListener('click', downloadOutboundDetailCsv);
+    $('outbound-detail-dialog').addEventListener('click', event => { if (event.target === $('outbound-detail-dialog')) $('outbound-detail-dialog').close(); });
+    $('order-status-filter').addEventListener('change', event => { state.orderStatus = event.target.value; state.pageNo = 1; renderOrders(); });
+    $('order-status-open').addEventListener('click', () => { renderOrderStatusDialog(); $('order-status-dialog').showModal(); });
+    $('order-status-close').addEventListener('click', () => $('order-status-dialog').close());
+    $('order-status-download').addEventListener('click', downloadOrderStatusCsv);
+    $('order-status-dialog').addEventListener('click', event => { if (event.target === $('order-status-dialog')) $('order-status-dialog').close(); });
+    $('chain-missing-open').addEventListener('click', () => { renderChainMissingDialog(); $('chain-missing-dialog').showModal(); });
+    $('chain-missing-close').addEventListener('click', () => $('chain-missing-dialog').close());
+    $('chain-missing-download').addEventListener('click', downloadChainMissingCsv);
+    $('chain-missing-dialog').addEventListener('click', event => { if (event.target === $('chain-missing-dialog')) $('chain-missing-dialog').close(); });
+    $('chain-soo-filter').addEventListener('input', event => { state.chainFilters.soo = event.target.value; state.pageNo = 1; renderChain(); });
+    $('chain-warehouse-filter').addEventListener('change', event => { state.chainFilters.warehouse = event.target.value; state.pageNo = 1; renderChain(); });
+    $('chain-carrier-filter').addEventListener('change', event => { state.chainFilters.carrier = event.target.value; state.pageNo = 1; renderChain(); });
+    $('chain-tms-date-filter').addEventListener('change', event => { state.chainFilters.tmsDate = event.target.value; state.pageNo = 1; renderChain(); });
+    $('chain-load-date-filter').addEventListener('change', event => { state.chainFilters.loadDate = event.target.value; state.pageNo = 1; renderChain(); });
+    $('chain-filter-reset').addEventListener('click', () => {
+      state.chainFilters = { soo: '', warehouse: '', carrier: '', tmsDate: '', loadDate: '' };
+      state.pageNo = 1;
+      $('chain-soo-filter').value = '';
+      $('chain-tms-date-filter').value = '';
+      $('chain-load-date-filter').value = '';
+      renderChain();
+    });
+    function generateCurrentBiReport() {
+      if (!state.data || !window.LogisticsBiReport) return;
+      const reportHtml = window.LogisticsBiReport.build({
+        metrics: metric(), dates: state.dates, source: state.data.source, collection: state.data.collection,
+        filters: { productionDates: state.productionDates === null ? '全部生产日期' : state.productionDates.map(labelDate).join('、'), region: selectionSummary('region', '全部统仓'), warehouse: selectionSummary('warehouse', '全部仓库'), carrier: selectionSummary('carrier', '全部承运商'), channel: selectionSummary('channel', '全部渠道') }, generatedAt: new Date().toISOString(),
+      });
+      const blob = new Blob([reportHtml], { type: 'text/html;charset=utf-8' }), url = URL.createObjectURL(blob), anchor = document.createElement('a');
+      anchor.href = url; anchor.download = `物流运营分析报告-${state.dates.join('_') || '未选日期'}.html`; anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const button = $('broadcast-btn'); button.textContent = '已开始下载 BI 报表';
+      window.setTimeout(() => { button.textContent = '生成并下载 BI 报表'; }, 2200);
+    }
+    $('broadcast-btn').addEventListener('click', generateCurrentBiReport);
+    document.addEventListener('input', persistFilterState);
+    document.addEventListener('change', persistFilterState);
+    function renderSyncStatus() {
+      const source = state.data.source || {}, collection = state.data.collection || {}, run = collection.latest_run;
+      const time = value => value ? new Date(value).toLocaleString('zh-CN', {timeZone:'Asia/Shanghai',hour12:false}) : '尚无';
+      const workflowMode = collection.monitor_mode === 'daily_workflow_latest';
+      const workflowJob = collection.latest_workflow_job;
+      const workflowFile = collection.latest_workflow_file;
+      const workflowFailed = workflowMode && workflowFile && ['failed', 'quarantined'].includes(workflowJob?.status)
+        && String(workflowJob.error_message || '').includes(workflowFile);
+      const failed = workflowMode ? workflowFailed : run && ['failed', 'stalled'].includes(run.status);
+      const running = workflowMode ? Boolean(workflowFile && !failed) : run?.status === 'running';
+      const waitingForFile = workflowMode && !collection.workflow_file_present;
+      const chip = document.querySelector('.sync-chip strong');
+      chip.textContent = failed ? '文件处理失败' : waitingForFile ? '等待当日文件' : running ? '监控中' : '数据可用';
+      chip.style.color = failed ? 'var(--red)' : waitingForFile || running ? 'var(--yellow)' : 'var(--green)';
+      const dot = document.querySelector('.sync-chip .status-dot');
+      dot.style.color = chip.style.color;
+      const outcome = workflowMode
+        ? failed ? `最新文件「${workflowFile}」处理失败：${workflowJob.error_message}；继续展示上一成功数据。`
+          : waitingForFile ? `当日目录「${collection.workflow_dir_name}」暂无 SOO 报表，继续展示上一成功数据。`
+          : `已发现当日最新报表「${workflowFile}」，监控器每 ${collection.interval_seconds} 秒检查并导入。`
+        : failed ? `最近采集失败：${run.error_message || run.error_code || '原因待检查'}，继续显示上一成功数据。`
+          : running ? '正在导出并校验，完成前保留上一成功数据。'
+            : run?.status === 'success' ? `最近采集成功${run.unchanged ? '（数据内容与上次相同）' : ''}，本次有效 SOO ${fmt(run.valid_soo_count)} 条。` : '尚未验证自动采集。';
+      $('collection-status').textContent = `${workflowMode ? '本机当日工作流目录监控' : collection.schedule_enabled ? '每小时自动采集' : '小时调度未启用'} · ${outcome} 页面每 60 秒检查数据库。`;
+      $('sidebar-note').textContent = workflowMode
+        ? `工作流目录：${collection.workflow_dir_name}；最新文件：${workflowFile || '暂无'}；最近成功入库：${time(source.last_success_import_at || source.last_success_sync_at)}。${waitingForFile ? '当前沿用上次成功数据。' : ''}`
+        : `最近成功获取数据：${time(source.last_success_sync_at)}；最近新批次入库：${time(source.last_success_import_at || source.last_success_sync_at)}。${run ? `本次查询：计划生产日期 ${run.report_start} 至 ${run.report_end}（北京时间）。` : `报表范围：${source.report_scope || '未记录'}。`}`;
+    }
+    async function reloadData() { const [response, mappingResponse, outboundResponse, pickupResponse] = await Promise.all([fetch('./data.json', {cache:'no-store'}), fetch('./warehouse-carriers.json', {cache:'no-store'}), fetch('./outbound-data.json', {cache:'no-store'}), fetch('./api/v1/pickup/hourly-transitions?limit=5000', {cache:'no-store'}).catch(error => ({ok:false, error}))]); if (!response.ok) throw new Error(`HTTP ${response.status}`); if (!mappingResponse.ok) throw new Error(`仓库承运商关系 HTTP ${mappingResponse.status}`); if (!outboundResponse.ok) throw new Error(`出库查询表 HTTP ${outboundResponse.status}`); state.data = await response.json(); const mappings = await mappingResponse.json(); const outbound = await outboundResponse.json(); state.warehouseCarriers = mappings.warehouse_carriers || {}; state.warehouseRegions = mappings.warehouse_regions || {}; state.outboundBySoo = Object.fromEntries((outbound.records || []).map(row => [String(row.soo_no || '').trim(), row])); state.outboundSource = outbound; if (pickupResponse.ok) { const pickup = await pickupResponse.json(); state.pickupTransitions = pickup.transitions || []; state.pickupSnapshotInfo = pickup; state.pickupTransitionError = pickup.total > state.pickupTransitions.length ? `接口返回 ${state.pickupTransitions.length} / ${pickup.total} 条，展示不完整` : ''; } else { state.pickupTransitions = []; state.pickupSnapshotInfo = null; state.pickupTransitionError = pickupResponse.error?.message || `HTTP ${pickupResponse.status}`; } fillFilters(); renderSyncStatus(); if (state.dates.length) render(); }
+    $('import-btn').addEventListener('click', async () => { const file = $('import-file').files[0]; if (!file) { $('import-result').textContent = '请先选择报表文件。'; return; } const form = new FormData(); form.append('file', file); $('import-result').textContent = '正在导入并校验…'; try { const response = await fetch('/api/v1/imports/upload', {method:'POST',body:form}); const result = await response.json(); if (!response.ok) throw new Error(result.detail || `HTTP ${response.status}`); $('import-result').textContent = `批次 #${result.batch_id}：${result.status}，有效 SOO ${result.valid_soo_count} 条${result.duplicate ? '（重复文件，未再次发布）' : ''}。`; await reloadData(); } catch(error) { $('import-result').textContent = `导入失败：${error.message}`; } });
+    reloadData().catch(error => { $('sidebar-note').textContent = `数据载入失败：${error.message}`; });
+    setInterval(() => reloadData().catch(error => { $('sidebar-note').textContent = `数据刷新失败：${error.message}`; }), 60 * 1000);
+  </script>
+</body>
+</html>
