@@ -1,7 +1,8 @@
 name = "b2b-logistics-tower"
 main = "cloudflare-worker/dist/server/index.js"
 compatibility_date = "2026-10-14"
-workers_dev = false
+workers_dev = true
+
 
 [[d1_databases]]
 binding = "DB"
