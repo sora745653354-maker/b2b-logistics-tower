@@ -1,0 +1,11 @@
+{
+  "name": "b2b-logistics-tower-cloudflare-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "validate": "node scripts/validate-artifact.mjs",
+    "test": "node scripts/check-worker.mjs",
+    "check": "npm run build && npm run validate && npm test"
+  }
+}

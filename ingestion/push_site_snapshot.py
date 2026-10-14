@@ -19,8 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from backend.sqlite_app import public_snapshot  # noqa: E402
 
-KEYCHAIN_SERVICE = "b2b-logistics-tower-site-token"
-KEYCHAIN_ACCOUNT = "site-uploader"
+KEYCHAIN_SERVICE = "b2b-logistics-tower-cloudflare-token"
+KEYCHAIN_ACCOUNT = "tower-uploader"
 
 
 def credential(from_stdin: bool) -> str:
@@ -76,8 +76,7 @@ def main() -> int:
     token = credential(args.token_stdin)
     request = Request(
         site_url + "/api/snapshot", data=body, method="POST",
-        headers={"Content-Type": "application/json", "x-tower-sync": "1",
-                 "OAI-Sites-Authorization": "Bearer " + token},
+        headers={"Content-Type": "application/json", "Authorization": "Bearer " + token},
     )
     try:
         with urlopen(request, timeout=30) as response:

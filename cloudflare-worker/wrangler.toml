@@ -1,0 +1,10 @@
+name = "b2b-logistics-tower"
+main = "dist/server/index.js"
+compatibility_date = "2026-10-14"
+workers_dev = false
+migrations_dir = "migrations"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "b2b-logistics-tower"
+database_id = "5cdf9ae2-765e-494e-98f6-fdfbb68858bf"

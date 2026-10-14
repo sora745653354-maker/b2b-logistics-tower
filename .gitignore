@@ -10,6 +10,7 @@ dist/*.json
 !dist/index.html
 !dist/bi-report.js
 !dist/warehouse-carriers.json
+/cloudflare-worker/dist/
 B2B物流控制塔-飞书妙搭迁移包/
 B2B物流控制塔-飞书妙搭迁移包.zip
 infra/LogisticsTowerLauncher.app/
