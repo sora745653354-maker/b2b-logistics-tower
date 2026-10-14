@@ -6,8 +6,8 @@ This deployment uses the dashboard source already tracked in `../dist/`. It buil
 
 - Repository: `sora745653354-maker/b2b-logistics-tower`
 - Root directory: `/`
-- Build command: `node cloudflare-worker/scripts/build.mjs && node cloudflare-worker/scripts/validate-artifact.mjs && node cloudflare-worker/scripts/check-worker.mjs`
-- Deploy command: `cd cloudflare-worker && npx wrangler d1 migrations apply b2b-logistics-tower --remote && npx wrangler deploy`
+- Build command: none (the tested Worker artifact is committed at `cloudflare-worker/dist/server/index.js`)
+- Deploy command: `npx wrangler deploy` (uses the repository-root `wrangler.toml`)
 - Production branch: `main`
 - D1 binding: `DB` (configured in `wrangler.toml`)
 - Secret: `SYNC_TOKEN`, at least 32 characters. Set it in Workers & Pages > Settings > Variables and Secrets before enabling snapshot updates. Never put it in this repository.
@@ -20,4 +20,4 @@ The local snapshot publisher reads the same token from macOS Keychain service `b
 
 ## Data and schema
 
-`migrations/0001_create_dashboard_snapshot_store.sql` creates the two D1 tables. The deployment command applies the migration idempotently before publishing the Worker. D1 starts empty; deployment does not import local orders. The first authorized snapshot upload is a separate operation.
+`migrations/0001_create_dashboard_snapshot_store.sql` creates the two D1 tables. Apply the migration once with `npx wrangler d1 migrations apply b2b-logistics-tower --remote` before the first deploy if the tables are not already present. D1 starts empty; deployment does not import local orders. The first authorized snapshot upload is a separate operation.
