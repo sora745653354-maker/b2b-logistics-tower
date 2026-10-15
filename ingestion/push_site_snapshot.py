@@ -7,6 +7,7 @@ cookies or raw report archives and never uploads contact fields.
 from __future__ import annotations
 
 import argparse
+import gzip
 import getpass
 import json
 import subprocess
@@ -59,24 +60,29 @@ def main() -> int:
     if not batch or not snapshot.get("records"):
         raise RuntimeError("No successful local TMS batch is available")
     body = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-    if len(body) > 2 * 1024 * 1024:
-        raise RuntimeError("Sanitized snapshot exceeds Site limit")
+    if len(body) > 32 * 1024 * 1024:
+        raise RuntimeError("Sanitized snapshot exceeds the 32 MiB uncompressed Site limit")
+    compressed_body = gzip.compress(body, mtime=0)
+    if len(compressed_body) > 2 * 1024 * 1024:
+        raise RuntimeError("Compressed snapshot exceeds the 2 MiB Site upload limit")
     if args.dry_run:
         print(json.dumps({"batch_id": batch, "records": len(snapshot["records"]),
-                          "bytes": len(body)}, ensure_ascii=False))
+                          "bytes": len(body), "compressed_bytes": len(compressed_body)}, ensure_ascii=False))
         return 0
     if args.export_path:
         args.export_path.parent.mkdir(parents=True, exist_ok=True)
         args.export_path.write_bytes(body + b"\n")
         print(json.dumps({"batch_id": batch, "records": len(snapshot["records"]),
-                          "bytes": len(body), "exported": str(args.export_path)},
+                          "bytes": len(body), "compressed_bytes": len(compressed_body),
+                          "exported": str(args.export_path)},
                          ensure_ascii=False))
         return 0
 
     token = credential(args.token_stdin)
     request = Request(
-        site_url + "/api/snapshot", data=body, method="POST",
-        headers={"Content-Type": "application/json", "Authorization": "Bearer " + token},
+        site_url + "/api/snapshot", data=compressed_body, method="POST",
+        headers={"Content-Type": "application/json", "Content-Encoding": "gzip",
+                 "Authorization": "Bearer " + token},
     )
     try:
         with urlopen(request, timeout=30) as response:

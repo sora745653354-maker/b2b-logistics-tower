@@ -1,7 +1,8 @@
 const page = "__TOWER_HTML__";
 const biReport = "__TOWER_BI_REPORT__";
 const maxBytes = 2 * 1024 * 1024;
-const maxUncompressedBytes = 16 * 1024 * 1024;
+const maxUncompressedBytes = 32 * 1024 * 1024;
+const maxRecordCount = 30000;
 const partSize = 100;
 const recordFields = ["row_no", "domain_code", "soo_no", "shipping_order_id", "waybill_id", "warehouse_code", "warehouse_name", "carrier_code", "carrier_name", "shop_code", "shop_name", "channel", "production_date", "business_dates", "production_at", "tms_created_at", "load_completed_at", "park_entered_at", "park_exited_at", "actual_pickup_at", "latest_pickup_at", "tms_status", "is_loaded", "is_picked_up", "soo_qty", "gross_cbm", "gross_weight", "carton_count", "origin_province", "origin_city", "dest_province", "dest_city", "source_updated_at", "quality_flags", "timeline_quality_flags"];
 const sourceFields = ["source_system", "file_name", "file_sha256", "last_source_updated_at", "last_success_sync_at", "last_success_import_at", "last_tms_check_at", "published_batch_id", "report_scope", "site_publication_mode"];
@@ -65,7 +66,7 @@ function emptySnapshot() {
 function normalize(input) {
   if (!input || !Array.isArray(input.records) || !input.source || !input.quality) throw new Error("Invalid snapshot format");
   const batch = Number(input.source.published_batch_id);
-  if (!Number.isSafeInteger(batch) || batch < 1 || input.records.length > 10000) throw new Error("Invalid batch or record count");
+  if (!Number.isSafeInteger(batch) || batch < 1 || input.records.length > maxRecordCount) throw new Error("Invalid batch or record count");
   const records = input.records.map((record) => {
     if (!record || typeof record.soo_no !== "string" || !record.soo_no) throw new Error("Invalid SOO record");
     const safeRecord = only(record, recordFields);
